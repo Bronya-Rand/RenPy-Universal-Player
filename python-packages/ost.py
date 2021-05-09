@@ -30,7 +30,10 @@ import renpy.audio.music as music
 # Creation of Music Room and Code Setup
 version = 1.0
 music.register_channel("music_room", mixer="music_room_mixer", loop=False)
-gamedir = renpy.config.gamedir.replace("\\", "/")
+if renpy.android:
+    gamedir = os.path.realpath("/sdcard/Android/data/com.sdc.rpyuost/game/")
+else:
+    gamedir = renpy.config.gamedir.replace("\\", "/")
 
 # Lists for holding media types
 renpyFileList = renpy.exports.list_files(common=False)
@@ -214,12 +217,21 @@ def dynamic_description_text(st, at):
     if game_soundtrack == False: 
         return Text("", size=23), 0.0
 
-    d = Text(game_soundtrack.description, substitute=False) # false sub for albums with brackets/etc
+    desc = len(game_soundtrack.description)
+
+    if desc <= 32:
+        descSize = 25
+    elif desc <= 48:
+        descSize = 23
+    else:
+        descSize = 21
+
+    d = Text(game_soundtrack.description, substitute=False, size=descSize) # false sub for albums with brackets/etc
     return d, 0.20
 
 def rpa_mapping_detection(d, refresh):
     try: 
-        renpy.exports.file(gamedir + "/RPASongMetadata.json")
+        renpy.exports.file("RPASongMetadata.json")
         return Text("", size=23), 0.0
     except:
         return Text("{b}Warning:{/b} The RPA metadata file hasn't been generated. Songs in the {i}track{/i} folder that are archived into a RPA won't work without it. Set {i}config.developer{/i} to {i}True{/i} in order to generate this file.", size=20), 0.0
@@ -585,7 +597,7 @@ except: pass
 scan_mp3()
 scan_ogg()
 
-if not renpy.config.developer:
+if renpy.config.developer:
     rpa_mapping()
 else:
     rpa_load_mapping()

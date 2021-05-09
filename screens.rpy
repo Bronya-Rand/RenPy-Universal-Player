@@ -505,58 +505,60 @@ style music_room_frame:
     background "gui/overlay/main_menu.png"
 
 style music_room_button:
-    xsize 0.2
+    xsize gui.music_room_button_xsize
     xfill True
 
 style music_room_viewport:
-    xpos 20 # set as gui.music_room_viewport_xpos
+    xpos gui.music_room_viewport_xpos
     yalign 0.5
-    spacing gui.navigation_spacing
-    ysize 0.95
+    spacing gui.music_room_spacing
+    ysize gui.music_room_viewport_ysize
 
 style music_room_information_text:
     xalign 1.0
-    ypos 220
+    ypos gui.music_room_information_ypos
     font gui.name_text_font
-    xsize 580
+    xsize gui.music_room_information_xsize
     xfill True
 
 style music_room_control_options:
-    xpos 715 # set as gui.music_room_options_xpos
-    yalign 0.58
-    spacing 20 # set as gui.music_room_options_spacing
+    xpos gui.music_room_options_xpos
+    yalign gui.music_room_options_yalign
+    spacing gui.music_room_spacing
 
 style music_room_setting_options:
-    xpos 715 
-    yalign 0.65
-    spacing 20
+    xpos gui.music_room_options_xpos 
+    yalign gui.music_room_settings_yalign
+    spacing gui.music_room_spacing
 
 style music_room_progress_bar:
-    xsize 710
-    xpos 330
+    xsize gui.music_room_progress_xsize
+    xpos gui.music_room_progress_xpos
     yalign 0.75
 
 style music_room_volume_bar:
-    xsize 120
-    xpos 1130
+    xsize gui.music_room_volume_xsize
+    xpos gui.music_room_volume_xpos
     yalign 0.75
 
 style music_room_volume_options:
-    xpos 1075
-    yalign 0.76
+    xpos gui.music_room_volume_options_xpos
+    yalign gui.music_room_volume_options_yalign
 
 style music_room_progress_text:
-    xpos 330 
-    yalign 0.79
+    xpos gui.music_room_progress_text_xpos 
+    yalign gui.music_room_progress_text_yalign
+    size gui.music_room_text_size
 
 style music_room_duration_text:
-    xpos 975 
-    yalign 0.79
+    xpos gui.music_room_duration_text_xpos 
+    yalign gui.music_room_progress_text_yalign
+    size gui.music_room_text_size
 
 transform cover_art_fade:
     anchor (0.5, 0.5)
-    xalign 0.35
-    yalign 0.35
+    xalign gui.music_room_cover_art_align
+    yalign gui.music_room_cover_art_align
     size (350,350)
     alpha 0
     linear 0.2 alpha 1
