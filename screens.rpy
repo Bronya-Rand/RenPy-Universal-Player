@@ -447,7 +447,7 @@ screen music_room():
             
             imagebutton:
                 idle ConditionSwitch("ost.loopSong", "images/music_room/replayOn.png", "True", "images/music_room/replay.png")
-                action [ToggleVariable("ost.loopSong", False, True), Function(renpy.curry(ost.current_music_play)(True))]
+                action [ToggleVariable("ost.loopSong", False, True)]
             
             imagebutton:
                 idle ConditionSwitch("ost.randomSong", "images/music_room/shuffleOn.png", "True", "images/music_room/shuffle.png")

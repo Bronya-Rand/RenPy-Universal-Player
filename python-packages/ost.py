@@ -258,18 +258,12 @@ def current_music_pause():
     music.stop(channel='music_room',fadeout=2.0)
 
 # Starts the song from it's pause spot
-def current_music_play(trigger=False):
+def current_music_play():
 
-    if game_soundtrack_pause is False and not trigger:
-        music.play(game_soundtrack.path, channel = 'music_room', loop=loopSong, fadein=2.0)
+    if game_soundtrack_pause is False:
+        music.play(game_soundtrack.path, channel = 'music_room', fadein=2.0)
     else:
-        if trigger:
-            pos = music.get_pos(channel = 'music_room') or time_duration
-            music.play("<from "+str(pos)+">"+game_soundtrack.path, channel='music_room')
-        else:
-            music.play(game_soundtrack_pause, channel = 'music_room', fadein=2.0)
-        if loopSong:
-            music.queue(game_soundtrack.path, channel = 'music_room', loop=True, fadein=2.0)
+        music.play(game_soundtrack_pause, channel = 'music_room', fadein=2.0)
     
 # Forwards track by 5 seconds
 def current_music_forward():
@@ -295,8 +289,6 @@ def current_music_forward():
         game_soundtrack_pause = "<from "+str(soundtrack_position) +">"+game_soundtrack.path
 
         music.play(game_soundtrack_pause, channel = 'music_room')
-        if loopSong:
-            music.queue(game_soundtrack.path, channel = 'music_room', loop=True)
 
 # Rewinds track by 5 seconds
 def current_music_backward():
@@ -315,8 +307,6 @@ def current_music_backward():
         game_soundtrack_pause = "<from "+str(soundtrack_position) +">"+game_soundtrack.path
             
         music.play(game_soundtrack_pause, channel = 'music_room')
-        if loopSong:
-            music.queue(game_soundtrack.path, channel = 'music_room', loop=True)
 
 # Advances to next track or track behind the current track
 def next_track(back=False):
