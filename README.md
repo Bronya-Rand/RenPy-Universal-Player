@@ -1,7 +1,7 @@
 # Ren'Py Universal Player (Ren'Py UOST-Player)
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K3K22K8SU)
 
-<u>Current Version:</u> [**1.0**](https://github.com/GanstaKingofSA/DDLC-OSTPlayer/releases/latest)
+<u>Current Version:</u> [**1.0**](https://github.com/GanstaKingofSA/RenPy-Universal-Player/releases/latest)
 
 Ren'Py-Universal-Player or (Ren'Py UOST-Player) is a enhanced music room for Ren'Py projects that allows users to play tracks outside the game's story along with sideloaded songs. 
 
