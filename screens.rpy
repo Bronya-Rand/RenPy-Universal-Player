@@ -312,7 +312,7 @@ screen navigation():
 
         textbutton _("Preferences") action ShowMenu("preferences")
 
-        textbutton _("Music Room") action [ShowMenu("music_room"), Stop('music', fadeout=2.0), If(preferences.get_volume("music") == 0.0, true=None, false=SetMute('music', True)), Function(ost.refresh_list)]
+        textbutton _("Music Room") action [ShowMenu("music_room"), Stop('music', fadeout=2.0), If(preferences.get_volume("music") == 0.0, true=SetVariable("ost.music_muted", True), false=SetMute('music', True)), Function(ost.refresh_list)]
 
         if _in_replay:
 
@@ -484,7 +484,7 @@ screen music_room():
     textbutton _("Return"):
         style "return_button"
 
-        action [Return(), If(renpy.music.is_playing(channel='music_room'), true=Function(ost.current_music_pause), false=None), If(music_muted, true=None, false=SetMute('music', False))]
+        action [Return(), If(renpy.music.is_playing(channel='music_room'), true=Function(ost.current_music_pause), false=None), If(ost.music_muted, true=None, false=SetMute('music', False)), SetVariable("ost.music_muted", False)]
 
 
 style music_room_frame is empty
