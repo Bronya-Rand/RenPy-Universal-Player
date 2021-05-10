@@ -57,6 +57,7 @@ priorityScan = 2
 
 # Stores paused track/player controls
 game_soundtrack_pause = False
+music_muted = False
 randomSong = False
 loopSong = False
 organizeAZ = False
