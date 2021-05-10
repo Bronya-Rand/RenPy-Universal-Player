@@ -261,9 +261,6 @@ def current_music_pause():
 def current_music_play():
     global time_position
 
-    if music.get_pos(channel = 'music_room') is not None:
-        return
-
     if game_soundtrack_pause is False:
         music.play(game_soundtrack.path, channel = 'music_room', loop=loopSong, fadein=2.0)
     else:
@@ -323,7 +320,7 @@ def next_track(back=False):
     global game_soundtrack
 
     for st in range(len(soundtracks)):
-        if game_soundtrack == soundtracks[st]:
+        if game_soundtrack == soundtracks[st] or game_soundtrack.description == soundtracks[st].description and game_soundtrack.name == soundtracks[st].name:
             try:
                 if back:
                     game_soundtrack = soundtracks[st-1]

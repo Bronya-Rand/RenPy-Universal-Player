@@ -423,7 +423,7 @@ screen music_room():
             
             imagebutton:
                 idle "images/music_room/play.png"
-                action [SensitiveIf(renpy.music.is_playing(channel='music_room')), Function(ost.current_music_play)]
+                action [SensitiveIf(renpy.music.is_playing(channel='music_room') == False), Function(ost.current_music_play)]
             
             imagebutton:
                 idle "images/music_room/pause.png"
@@ -484,7 +484,7 @@ screen music_room():
     textbutton _("Return"):
         style "return_button"
 
-        action [Return(), Stop('music_room', fadeout=2.0), Play('music', config.main_menu_music, fadein=2.0)]
+        action [Return(), If(renpy.music.is_playing(channel='music_room'), true=Function(ost.current_music_pause), false=None), Play('music', config.main_menu_music, fadein=2.0)]
 
 
 style music_room_frame is empty
