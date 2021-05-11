@@ -30,10 +30,11 @@ import renpy.audio.music as music
 # Creation of Music Room and Code Setup
 version = 1.1
 music.register_channel("music_room", mixer="music_room_mixer", loop=False)
-if renpy.android:
-    gamedir = os.path.realpath("/sdcard/Android/data/com.sdc.rpyuost/game/")
-else:
+if renpy.windows:
     gamedir = renpy.config.gamedir.replace("\\", "/")
+else:
+    gamedir = renpy.config.gamedir
+
 
 # Lists for holding media types
 renpyFileList = renpy.exports.list_files(common=False)
