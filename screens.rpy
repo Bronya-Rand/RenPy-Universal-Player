@@ -385,7 +385,7 @@ screen music_room():
                 textbutton "[st.name]":
                     style "music_room_button"
                     if ost.game_soundtrack:
-                        action [SensitiveIf(ost.game_soundtrack.name != st.name), SetVariable("ost.game_soundtrack", st), Play("music_room", st.path, loop=ost.loopSong, fadein=2.0)]
+                        action [SensitiveIf(ost.game_soundtrack.name != st.name or ost.game_soundtrack.author != st.author or ost.game_soundtrack.description != st.description), SetVariable("ost.game_soundtrack", st), Play("music_room", st.path, loop=ost.loopSong, fadein=2.0)]
                     else:
                         action [SetVariable("ost.game_soundtrack", st), Play("music_room", st.path, loop=ost.loopSong, fadein=2.0)]
 
@@ -505,13 +505,13 @@ style music_room_frame:
     background "gui/overlay/main_menu.png"
 
 style music_room_button:
-    xsize gui.music_room_button_xsize
     xfill True
 
 style music_room_viewport:
     xpos gui.music_room_viewport_xpos
     yalign 0.5
     spacing gui.music_room_spacing
+    xsize gui.music_room_viewport_xsize
     ysize gui.music_room_viewport_ysize
 
 style music_room_information_text:
