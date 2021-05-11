@@ -403,10 +403,10 @@ define gui.nvl_button_xalign = 0.0
 ## This controls the music room player positions, sizes and more.
 
 ## The positions and sizes of the music viewport list
-define gui.music_room_button_xsize = 0.2
+define gui.music_room_viewport_xsize = 0.45
 define gui.music_room_viewport_xpos = 20
 define gui.music_room_spacing = 20
-define gui.music_room_viewport_ysize = 0.95
+define gui.music_room_viewport_ysize = 0.93
 
 ## The positions and sizes of the music information text
 define gui.music_room_information_ypos = 220
@@ -513,6 +513,5 @@ init python:
         gui.nvl_button_xpos = 20
 
         gui.music_room_button_size = gui.interface_text_size
-        gui.music_room_button_xsize = 0.19
         gui.music_room_volume_options_yalign = 0.754
         gui.music_room_text_size = 24
