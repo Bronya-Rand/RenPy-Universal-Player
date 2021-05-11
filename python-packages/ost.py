@@ -28,7 +28,7 @@ from renpy.display.im import image
 import renpy.audio.music as music
 
 # Creation of Music Room and Code Setup
-version = 1.0
+version = 1.1
 music.register_channel("music_room", mixer="music_room_mixer", loop=False)
 if renpy.android:
     gamedir = os.path.realpath("/sdcard/Android/data/com.sdc.rpyuost/game/")
@@ -587,6 +587,15 @@ except: pass
 
 scan_mp3()
 scan_ogg()
+
+# checks for non-existant song covers for cleaning the covers directory
+cover_list = ["track/covers/" + x for x in os.listdir(gamedir + '/track/covers')] 
+for x in reversed(cover_list):
+    for y in soundtracks:
+        if y.cover_art == x:
+            cover_list.pop(x)
+for x in cover_list:
+    os.remove(gamedir + "/" + x)
 
 if renpy.config.developer:
     rpa_mapping()
