@@ -403,41 +403,44 @@ define gui.nvl_button_xalign = 0.0
 ## This controls the music room player positions, sizes and more.
 
 ## The positions and sizes of the music viewport list
-define gui.music_room_viewport_xsize = 0.45
-define gui.music_room_viewport_xpos = 20
+define gui.music_room_viewport_xsize = 250
+define gui.music_room_viewport_pos = 20
 define gui.music_room_spacing = 20
 define gui.music_room_viewport_ysize = 0.93
 
 ## The positions and sizes of the music information text
+define gui.music_room_information_xpos = 700
 define gui.music_room_information_ypos = 220
 define gui.music_room_information_xsize = 580
 
 ## The positions and sizes of the music controls
 define gui.music_room_options_xpos = 715
-define gui.music_room_options_yalign = 0.58
+define gui.music_room_options_ypos = 410
 define gui.music_room_options_spacing = 20
 
 ## The positions of the music settings controls
-define gui.music_room_settings_yalign = 0.65
+define gui.music_room_settings_ypos = 450
 
 ## The positions and sizes of the music progress bar
 define gui.music_room_progress_xsize = 710
 define gui.music_room_progress_xpos = 330
+define gui.music_room_progress_ypos = 520
 
 ## The positions and sizes of the music volume bar
 define gui.music_room_volume_xsize = 120
 define gui.music_room_volume_xpos = 1130
 define gui.music_room_volume_options_xpos = 1075
-define gui.music_room_volume_options_yalign = 0.76
+define gui.music_room_volume_options_ypos = 507
 
 ## The positions for the music progress/duration time text
 define gui.music_room_progress_text_xpos = 330
 define gui.music_room_text_size = gui.interface_text_size
 define gui.music_room_duration_text_xpos = 975
-define gui.music_room_progress_text_yalign = 0.8
+define gui.music_room_progress_text_ypos = 550
 
 ## The positions for the cover art and it's transform properties
-define gui.music_room_cover_art_align = 0.35
+define gui.music_room_cover_art_xpos = 500
+define gui.music_room_cover_art_ypos = 300
 
 ## Localization ################################################################
 
@@ -512,6 +515,4 @@ init python:
         gui.nvl_button_width = 1240
         gui.nvl_button_xpos = 20
 
-        gui.music_room_button_size = gui.interface_text_size
-        gui.music_room_volume_options_yalign = 0.754
         gui.music_room_text_size = 24

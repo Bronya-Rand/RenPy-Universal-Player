@@ -350,13 +350,13 @@ style navigation_button_text:
 ##
 ## Used to display music within the game.
 
-image readablePos = DynamicDisplayable(ost.music_pos)
-image readableDur = DynamicDisplayable(ost.music_dur) 
-image titleName = DynamicDisplayable(ost.dynamic_title_text) 
-image authorName = DynamicDisplayable(ost.dynamic_author_text) 
+image readablePos = DynamicDisplayable(renpy.curry(ost.music_pos)("music_room_progress_text"))
+image readableDur = DynamicDisplayable(renpy.curry(ost.music_dur)("music_room_duration_text")) 
+image titleName = DynamicDisplayable(renpy.curry(ost.dynamic_title_text)("music_room_information_text")) 
+image authorName = DynamicDisplayable(renpy.curry(ost.dynamic_author_text)("music_room_information_text")) 
 image coverArt = DynamicDisplayable(ost.refresh_cover_data) 
-image songDescription = DynamicDisplayable(ost.dynamic_description_text) 
-image rpa_map_warning = DynamicDisplayable(ost.rpa_mapping_detection) 
+image songDescription = DynamicDisplayable(renpy.curry(ost.dynamic_description_text)("music_room_information_text")) 
+image rpa_map_warning = DynamicDisplayable(renpy.curry(ost.rpa_mapping_detection)("music_room_information_text"))
 
 screen music_room():
 
@@ -383,7 +383,7 @@ screen music_room():
 
             for st in ost.soundtracks:
                 textbutton "[st.name]":
-                    style "music_room_button"
+                    text_style "music_room_button"
                     if ost.game_soundtrack:
                         action [SensitiveIf(ost.game_soundtrack.name != st.name or ost.game_soundtrack.author != st.author or ost.game_soundtrack.description != st.description), SetVariable("ost.game_soundtrack", st), Play("music_room", st.path, loop=ost.loopSong, fadein=2.0)]
                     else:
@@ -400,8 +400,6 @@ screen music_room():
         if ost.game_soundtrack.author:
 
             vbox: # sets the vbox for the song name / artist name
-
-                style "music_room_information_text"
 
                 hbox: # adds a hbox to the area set
                     vbox:
@@ -488,14 +486,14 @@ screen music_room():
 
 
 style music_room_frame is empty
-style music_room_button is gui_button
 style music_room_viewport is gui_viewport
-style music_room_information_text is gui_text
-style music_room_control_options is gui_button
-style music_room_setting_options is gui_button
 style music_room_progress_bar is gui_slider
 style music_room_volume_bar is gui_slider
 style music_room_volume_options is gui_button
+style music_room_button is gui_button
+style music_room_control_options is gui_button
+style music_room_setting_options is gui_button
+style music_room_information_text is gui_text
 style music_room_progress_text is gui_text
 style music_room_duration_text is gui_text
 
@@ -504,61 +502,61 @@ style music_room_frame:
 
     background "gui/overlay/main_menu.png"
 
-style music_room_button:
-    xfill True
+style music_room_button is default:
+    font gui.text_font
+    size gui.interface_text_size
+    hover_color gui.hover_color
+    line_spacing 5
 
 style music_room_viewport:
-    xpos gui.music_room_viewport_xpos
-    yalign 0.5
-    spacing gui.music_room_spacing
+    xpos gui.music_room_viewport_pos
+    ypos gui.music_room_viewport_pos
     xsize gui.music_room_viewport_xsize
     ysize gui.music_room_viewport_ysize
 
 style music_room_information_text:
-    xalign 1.0
+    font gui.interface_text_font
+    size 22
+    xpos gui.music_room_information_xpos
     ypos gui.music_room_information_ypos
-    font gui.name_text_font
     xsize gui.music_room_information_xsize
     xfill True
 
 style music_room_control_options:
     xpos gui.music_room_options_xpos
-    yalign gui.music_room_options_yalign
+    ypos gui.music_room_options_ypos
     spacing gui.music_room_spacing
 
-style music_room_setting_options:
-    xpos gui.music_room_options_xpos 
-    yalign gui.music_room_settings_yalign
-    spacing gui.music_room_spacing
+style music_room_setting_options is music_room_control_options:
+    ypos gui.music_room_settings_ypos
 
 style music_room_progress_bar:
     xsize gui.music_room_progress_xsize
     xpos gui.music_room_progress_xpos
-    yalign 0.75
+    ypos gui.music_room_progress_ypos
 
 style music_room_volume_bar:
     xsize gui.music_room_volume_xsize
     xpos gui.music_room_volume_xpos
-    yalign 0.75
+    ypos gui.music_room_progress_ypos
 
 style music_room_volume_options:
     xpos gui.music_room_volume_options_xpos
-    yalign gui.music_room_volume_options_yalign
+    ypos gui.music_room_volume_options_ypos
 
 style music_room_progress_text:
+    font gui.interface_text_font
     xpos gui.music_room_progress_text_xpos 
-    yalign gui.music_room_progress_text_yalign
+    ypos gui.music_room_progress_text_ypos
     size gui.music_room_text_size
 
-style music_room_duration_text:
+style music_room_duration_text is music_room_progress_text:
     xpos gui.music_room_duration_text_xpos 
-    yalign gui.music_room_progress_text_yalign
-    size gui.music_room_text_size
 
 transform cover_art_fade:
     anchor (0.5, 0.5)
-    xalign gui.music_room_cover_art_align
-    yalign gui.music_room_cover_art_align
+    xpos gui.music_room_cover_art_xpos
+    ypos gui.music_room_cover_art_ypos
     size (350,350)
     alpha 0
     linear 0.2 alpha 1

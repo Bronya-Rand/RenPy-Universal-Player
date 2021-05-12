@@ -143,12 +143,12 @@ class AdjustableAudioPositionValue(renpy.ui.BarValue):
 
         return self.update_interval 
 
-def music_pos(st, at):
+def music_pos(style_name, st, at):
     global time_position
     global time_duration
 
     if game_soundtrack == False: # failsafe to when user quits out of OST
-        return Text("", style="music_room_progress_text", size=40), 0.0
+        return Text("", style=style_name, size=40), 0.0
 
     if music.is_playing(channel='music_room'): # checks if music is playing
         time_position = music.get_pos(channel='music_room') or time_position # grabs position of song
@@ -157,14 +157,14 @@ def music_pos(st, at):
             time_position = 0.0
 
     readableTime = convert_time(time_position) # converts to readable time for display
-    d = Text(readableTime, style="music_room_progress_text") 
+    d = Text(readableTime, style=style_name) 
     return d, 0.20
 
-def music_dur(st, at):
+def music_dur(style_name, st, at):
     global time_duration
 
     if game_soundtrack == False: # failsafe to when user quits out of OST
-        return Text("", style="music_room_duration_text", size=40), 0.0
+        return Text("", style=style_name, size=40), 0.0
 
     if music.is_playing(channel='music_room'): # checks if music is playing
         time_duration = music.get_duration(channel='music_room') or time_duration # sets duration to what renpy thinks it lasts
@@ -172,10 +172,10 @@ def music_dur(st, at):
         time_duration = game_soundtrack.byteTime
 
     readableDuration = convert_time(time_duration) # converts to readable time for display
-    d = Text(readableDuration, style="music_room_duration_text")     
+    d = Text(readableDuration, style=style_name)     
     return d, 0.20
 
-def dynamic_title_text(st, at):
+def dynamic_title_text(style_name, st, at):
     if game_soundtrack == False: # failsafe to when user quits out of OST
         return Text("Exiting...", size=36), 0.0
 
@@ -188,12 +188,12 @@ def dynamic_title_text(st, at):
     else:
         songNameSize = 23
 
-    d = Text(game_soundtrack.full_name, size=songNameSize)
+    d = Text(game_soundtrack.full_name, style=style_name, size=songNameSize)
     return d, 0.20
 
-def dynamic_author_text(st, at):
+def dynamic_author_text(style_name, st, at):
     if game_soundtrack == False: # failsafe to when user quits out of OST
-        return Text("", size=gui.text_size), 0.0
+        return Text("", style=style_name, size=gui.text_size), 0.0
 
     author = len(game_soundtrack.author)
 
@@ -204,7 +204,7 @@ def dynamic_author_text(st, at):
     else:
         authorNameSize = 21
 
-    d = Text(game_soundtrack.author, size=authorNameSize)
+    d = Text(game_soundtrack.author, style=style_name, size=authorNameSize)
     return d, 0.20
 
 def refresh_cover_data(st, at):
@@ -215,7 +215,7 @@ def refresh_cover_data(st, at):
     return d, 0.20
 
 # displays current music description
-def dynamic_description_text(st, at):
+def dynamic_description_text(style_name, st, at):
     if game_soundtrack == False: 
         return Text("", size=23), 0.0
 
@@ -228,15 +228,15 @@ def dynamic_description_text(st, at):
     else:
         descSize = 21
 
-    d = Text(game_soundtrack.description, substitute=False, size=descSize) # false sub for albums with brackets/etc
+    d = Text(game_soundtrack.description, style=style_name, substitute=False, size=descSize) # false sub for albums with brackets/etc
     return d, 0.20
 
-def rpa_mapping_detection(d, refresh):
+def rpa_mapping_detection(style_name, st, at):
     try: 
         renpy.exports.file("RPASongMetadata.json")
         return Text("", size=23), 0.0
     except:
-        return Text("{b}Warning:{/b} The RPA metadata file hasn't been generated. Songs in the {i}track{/i} folder that are archived into a RPA won't work without it. Set {i}config.developer{/i} to {i}True{/i} in order to generate this file.", size=20), 0.0
+        return Text("{b}Warning:{/b} The RPA metadata file hasn't been generated. Songs in the {i}track{/i} folder that are archived into a RPA won't work without it. Set {i}config.developer{/i} to {i}True{/i} in order to generate this file.", style=style_name, size=20), 0.0
 
 # Converts the time to a readable time
 def convert_time(x):
@@ -261,6 +261,9 @@ def current_music_pause():
 
 # Starts the song from it's pause spot
 def current_music_play():
+
+    if music.is_playing(channel='music_room'):
+        return
 
     if game_soundtrack_pause is False:
         music.play(game_soundtrack.path, channel = 'music_room', fadein=2.0)
