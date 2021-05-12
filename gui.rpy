@@ -516,3 +516,5 @@ init python:
         gui.nvl_button_xpos = 20
 
         gui.music_room_text_size = 24
+        gui.music_room_progress_text_ypos = 560
+        gui.music_room_volume_options_ypos = 516
