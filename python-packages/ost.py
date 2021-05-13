@@ -28,7 +28,7 @@ from renpy.display.im import image
 import renpy.audio.music as music
 
 # Creation of Music Room and Code Setup
-version = 1.1
+version = 1.2
 music.register_channel("music_room", mixer="music_room_mixer", loop=False)
 if renpy.windows:
     gamedir = renpy.config.gamedir.replace("\\", "/")
@@ -55,6 +55,7 @@ soundtrack_position = 0.0
 soundtrack_duration = 0.0
 old_volume = 0.0
 priorityScan = 2
+scale = 1.0
 
 # Stores paused track/player controls
 game_soundtrack_pause = False
@@ -143,6 +144,12 @@ class AdjustableAudioPositionValue(renpy.ui.BarValue):
 
         return self.update_interval 
 
+# scales positions/spacing if not 1280x720
+if renpy.config.screen_width != 1280:
+    scale = renpy.config.screen_width / 1280.0
+else:
+    scale = 1.0
+
 def music_pos(style_name, st, at):
     global time_position
     global time_duration
@@ -177,16 +184,16 @@ def music_dur(style_name, st, at):
 
 def dynamic_title_text(style_name, st, at):
     if game_soundtrack == False: # failsafe to when user quits out of OST
-        return Text("Exiting...", size=36), 0.0
+        return Text("Exiting...", size=int(36 * scale)), 0.0
 
     title = len(game_soundtrack.full_name) # grabs the length of the name and artist 
 
     if title <= 21: # checks length against set var checks (can be changed) 
-        songNameSize = 37 # sets font size 32
+        songNameSize = int(37 * scale) 
     elif title <= 28:
-        songNameSize = 29
+        songNameSize = int(29 * scale)
     else:
-        songNameSize = 23
+        songNameSize = int(23 * scale)
 
     d = Text(game_soundtrack.full_name, style=style_name, size=songNameSize)
     return d, 0.20
@@ -198,11 +205,11 @@ def dynamic_author_text(style_name, st, at):
     author = len(game_soundtrack.author)
 
     if author <= 32:
-        authorNameSize = 25
+        authorNameSize = int(25 * scale)
     elif author <= 48:
-        authorNameSize = 23
+        authorNameSize = int(23 * scale)
     else:
-        authorNameSize = 21
+        authorNameSize = int(21 * scale)
 
     d = Text(game_soundtrack.author, style=style_name, size=authorNameSize)
     return d, 0.20
@@ -222,11 +229,11 @@ def dynamic_description_text(style_name, st, at):
     desc = len(game_soundtrack.description)
 
     if desc <= 32:
-        descSize = 25
+        descSize = int(25 * scale)
     elif desc <= 48:
-        descSize = 23
+        descSize = int(23 * scale)
     else:
-        descSize = 21
+        descSize = int(21 * scale)
 
     d = Text(game_soundtrack.description, style=style_name, substitute=False, size=descSize) # false sub for albums with brackets/etc
     return d, 0.20
@@ -449,7 +456,7 @@ def scan_ogg():
             def_ogg(title, artist, path, priorityScan, sec, altAlbum, cover_formats, y, album, comment) 
 
 # Makes a OGG class for a OGG track to the OST Player
-def def_ogg(title, artist, priority, sec, altAlbum, cover_formats, y, album, comments):
+def def_ogg(title, artist, path, priority, sec, altAlbum, cover_formats, y, album, comment):
     if title is None: 
         title = "Unknown OGG File " + str(y)
     if artist is None: 
