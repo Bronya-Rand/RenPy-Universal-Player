@@ -26,9 +26,10 @@ from tinytag import TinyTag
 from renpy.text.text import Text
 from renpy.display.im import image
 import renpy.audio.music as music
+import renpy.display.behavior as displayBehavior
 
 # Creation of Music Room and Code Setup
-version = 1.2
+version = 1.1
 music.register_channel("music_room", mixer="music_room_mixer", loop=False)
 if renpy.windows:
     gamedir = renpy.config.gamedir.replace("\\", "/")
@@ -238,6 +239,16 @@ def dynamic_description_text(style_name, st, at):
     d = Text(game_soundtrack.description, style=style_name, substitute=False, size=descSize) # false sub for albums with brackets/etc
     return d, 0.20
 
+def auto_play_pause_button(st, at):
+    if game_soundtrack == False: 
+        return Text("", size=23), 0.0
+    
+    if music.is_playing(channel='music_room'):
+        d = displayBehavior.ImageButton("images/music_room/pause.png", action=current_music_pause)
+    else:
+        d = displayBehavior.ImageButton("images/music_room/play.png", action=current_music_play)
+    return d, 0.20
+
 def rpa_mapping_detection(style_name, st, at):
     try: 
         renpy.exports.file("RPASongMetadata.json")
@@ -255,9 +266,6 @@ def convert_time(x):
 def current_music_pause():
     global soundtrack_position, soundtrack_duration, game_soundtrack_pause
 
-    if music.get_pos(channel = 'music_room') is None:
-        return
-
     soundtrack_position = music.get_pos(channel = 'music_room') + 1.6
     soundtrack_duration = music.get_duration(channel = 'music_room')
 
@@ -268,9 +276,6 @@ def current_music_pause():
 
 # Starts the song from it's pause spot
 def current_music_play():
-
-    if music.is_playing(channel='music_room'):
-        return
 
     if game_soundtrack_pause is False:
         music.play(game_soundtrack.path, channel = 'music_room', fadein=2.0)

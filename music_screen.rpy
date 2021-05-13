@@ -51,10 +51,6 @@ init python:
         gui.music_room_progress_text_ypos = int(560 * ost.scale)
         gui.music_room_volume_options_ypos = int(516 * ost.scale)
 
-## Music Room screen ###########################################################
-##
-## Used to display music within the game.
-
 image readablePos = DynamicDisplayable(renpy.curry(ost.music_pos)("music_room_progress_text"))
 image readableDur = DynamicDisplayable(renpy.curry(ost.music_dur)("music_room_duration_text")) 
 image titleName = DynamicDisplayable(renpy.curry(ost.dynamic_title_text)("music_room_information_text")) 
@@ -62,10 +58,10 @@ image authorName = DynamicDisplayable(renpy.curry(ost.dynamic_author_text)("musi
 image coverArt = DynamicDisplayable(ost.refresh_cover_data) 
 image songDescription = DynamicDisplayable(renpy.curry(ost.dynamic_description_text)("music_room_information_text")) 
 image rpa_map_warning = DynamicDisplayable(renpy.curry(ost.rpa_mapping_detection)("music_room_information_text"))
+image playPauseButton = DynamicDisplayable(ost.auto_play_pause_button)
 
 screen music_room():
 
-    ## This ensures that any other menu screen is replaced.
     tag menu
 
     default bar_val = ost.AdjustableAudioPositionValue()
@@ -82,8 +78,10 @@ screen music_room():
         viewport id "vpo":
 
             style "music_room_viewport"
+
             mousewheel True
             has vbox
+
             spacing gui.navigation_spacing
 
             for st in ost.soundtracks:
@@ -104,14 +102,16 @@ screen music_room():
 
         if ost.game_soundtrack.author:
 
-            vbox: # sets the vbox for the song name / artist name
+            vbox:
 
-                hbox: # adds a hbox to the area set
+                hbox: 
                     vbox:
                         add "titleName"
+
                 hbox:
                     vbox:
                         add "authorName"
+
                 if ost.game_soundtrack.description:
                     hbox:
                         vbox:
@@ -124,13 +124,7 @@ screen music_room():
                 idle At("images/music_room/backward.png", imagebutton_scale)
                 action [SensitiveIf(renpy.music.is_playing(channel='music_room')), Function(ost.current_music_backward)]
             
-            imagebutton:
-                idle At("images/music_room/play.png", imagebutton_scale)
-                action [SensitiveIf(renpy.music.is_playing(channel='music_room') == False), Function(ost.current_music_play)]
-            
-            imagebutton:
-                idle At("images/music_room/pause.png", imagebutton_scale)
-                action [SensitiveIf(renpy.music.is_playing(channel='music_room')), Function(ost.current_music_pause)]
+            add "playPauseButton" at imagebutton_scale
             
             imagebutton:
                 idle At("images/music_room/forward.png", imagebutton_scale)
@@ -173,8 +167,8 @@ screen music_room():
             idle At(ConditionSwitch("preferences.get_volume(\"music_room_mixer\") == 0.0", "images/music_room/volume.png", "True", "images/music_room/volumeOn.png"), imagebutton_scale)
             action [Function(ost.mute_player)]
             
-        add "readablePos" #xpos 330 ypos 540
-        add "readableDur" #xpos 970 ypos 540
+        add "readablePos"
+        add "readableDur"
 
     text "Ren'Py Universal Player v[ost.version]":
         xalign 1.0 yalign 1.0
@@ -188,7 +182,6 @@ screen music_room():
         style "return_button"
 
         action [Return(), If(renpy.music.is_playing(channel='music_room'), true=Function(ost.current_music_pause), false=None), If(ost.music_muted, true=None, false=SetMute('music', False)), SetVariable("ost.music_muted", False)]
-
 
 style music_room_frame is empty
 style music_room_viewport is gui_viewport
