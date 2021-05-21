@@ -29,7 +29,7 @@ import renpy.audio.music as music
 import renpy.display.behavior as displayBehavior
 
 # Creation of Music Room and Code Setup
-version = 1.2
+version = 1.3
 music.register_channel("music_room", mixer="music_room_mixer", loop=False)
 if renpy.windows:
     gamedir = renpy.config.gamedir.replace("\\", "/")
