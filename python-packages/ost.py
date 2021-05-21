@@ -33,6 +33,10 @@ version = 1.2
 music.register_channel("music_room", mixer="music_room_mixer", loop=False)
 if renpy.windows:
     gamedir = renpy.config.gamedir.replace("\\", "/")
+elif renpy.android:
+    try: os.mkdir(os.path.join(os.environ["ANDROID_PUBLIC"], "game"))
+    except: pass
+    gamedir = os.path.join(os.environ["ANDROID_PUBLIC"], "game")
 else:
     gamedir = renpy.config.gamedir
 
@@ -419,19 +423,14 @@ def scan_mp3():
             for x in reversed(range(len(playableMP3List))): 
                 playableMP3List.pop(x)
 
-            mp3List = [gamedir + "/track\\" + x for x in os.listdir(gamedir + '/track') if x.endswith(".mp3")] 
-            playableMP3List = [gamedir + "/track\\" + x for x in os.listdir(gamedir + '/track') if x.endswith(".mp3")]
- 
-        else:
-
-            mp3List = glob.glob(gamedir + '/track/*.mp3') 
-            playableMP3List = glob.glob(gamedir + '/track/*.mp3')
+        mp3List = ["track/" + x for x in os.listdir(gamedir + '/track') if x.endswith(".mp3")] 
+        playableMP3List = ["track/" + x for x in os.listdir(gamedir + '/track') if x.endswith(".mp3")]
 
         mp3ListLength = len(playableMP3List) 
 
         for y in range(mp3ListLength):
-            path = playableMP3List[y].replace("\\", "/") 
-            tags = TinyTag.get(path, image=True) 
+            path = playableMP3List[y]
+            tags = TinyTag.get(gamedir + "/" + path, image=True) 
             title, artist, sec, altAlbum, cover_formats, album, comment = get_info(path, tags)
             def_mp3(title, artist, path, priorityScan, sec, altAlbum, cover_formats, y, album, comment)
 
@@ -445,18 +444,14 @@ def scan_ogg():
             for x in reversed(range(len(playableOGGList))): 
                 playableOGGList.pop(x)
 
-            oggList = [gamedir + "/track\\" + x for x in os.listdir(gamedir + '/track') if x.endswith(".ogg")] 
-            playableOGGList = [gamedir + "/track\\" + x for x in os.listdir(gamedir + '/track') if x.endswith(".ogg")]
-
-        else:
-            oggList = glob.glob(gamedir + '/track/*.ogg') 
-            playableOGGList = glob.glob(gamedir + '/track/*.ogg')
+        oggList = ["track/" + x for x in os.listdir(gamedir + '/track') if x.endswith(".ogg")]
+        playableOGGList = ["track/" + x for x in os.listdir(gamedir + '/track') if x.endswith(".ogg")]
 
         oggListLength = len(playableOGGList)
 
         for y in range(oggListLength):
-            path = playableOGGList[y].replace("\\", "/")
-            tags = TinyTag.get(path, image=True) 
+            path = playableOGGList[y]
+            tags = TinyTag.get(gamedir + "/" + path, image=True) 
             title, artist, sec, altAlbum, cover_formats, album, comment = get_info(path, tags) 
             def_ogg(title, artist, path, priorityScan, sec, altAlbum, cover_formats, y, album, comment) 
 
@@ -531,11 +526,11 @@ def def_mp3(title, artist, path, priority, sec, altAlbum, cover_formats, y, albu
 # maps track files in track folder before building the game
 def rpa_mapping():
     data = []
-    songTemp = ["track\\" + x for x in os.listdir(gamedir + '/track') if x.endswith(".mp3") or x.endswith(".ogg")]
+    songTemp = ["track/" + x for x in os.listdir(gamedir + '/track') if x.endswith(".mp3") or x.endswith(".ogg")]
     try: os.remove(gamedir + "/RPASongMetadata.json")
     except: pass
     for y in range(len(songTemp)):
-        path = songTemp[y].replace("\\", "/") 
+        path = songTemp[y]
         tags = TinyTag.get(gamedir + "/" + path, image=True) 
         title, artist, sec, altAlbum, cover_formats, album, comment = get_info(path, tags) 
         data.append ({
