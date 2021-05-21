@@ -1,12 +1,12 @@
 # Ren'Py Universal Player (Ren'Py UOST-Player)
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K3K22K8SU)
 
-<u>Current Version:</u> [**1.2**](https://github.com/GanstaKingofSA/RenPy-Universal-Player/releases/latest)
+<u>Current Version:</u> [**1.3**](https://github.com/GanstaKingofSA/RenPy-Universal-Player/releases/latest)
 
 Ren'Py-Universal-Player or (Ren'Py UOST-Player) is a enhanced music room for Ren'Py projects that allows users to play tracks outside the game's story along with sideloaded songs. 
 
 ## Features
-* MP3 and OGG Playback from a folder or inside a RPA
+* MP3 and OGG Playback from a folder or inside a RPA/APK file
   > You will need to enable Developer Mode in order to make the metadata of songs in the track RPA folder generate for distribution.
 * Metadata support for tracks
 * Music Player controls
@@ -45,11 +45,11 @@ cover_art | Path to the track's cover art (JPG/PNG Only)
 ```
 
 ## How do I priortize a song or make a song the first one?
-Enable *Prty* in the music room and set the song priority by a value. 0 is the highest priority you can make a song be while 1, 2, etc. will be prioritzed lower in the list. i.e. 0 > 1 > 2 > ...
+Enable the numbered list icon in the music room and set the song priority by a value. 0 is the highest priority you can make a song be while 1, 2, etc. will be prioritzed lower in the list. i.e. 0 > 1 > 2 > ...
 > You may also enable this by setting *organizePriority* to True within <u>ost.py</u>.
 
 ## How do I organize the list alphabetically?
-Enable A-Z in the music room or set *organizeAZ* to <u>True</u> within <u>ost.py</u>.
+Enable the AZ iconin the music room or set *organizeAZ* to <u>True</u> within <u>ost.py</u>.
 
 ## Why is there files in the <u>python-packages</u> folder?
 
