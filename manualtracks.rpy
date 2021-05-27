@@ -11,11 +11,11 @@ init python:
     
     # easy_like_summer = ost.soundtrack(
     #     name = "Easy", 
-    #     full_name = "Easy",
     #     path = "bgm/09 Easy.mp3",
     #     priority = 1,
     #     author = "Lionel Richie",
     #     description = "Easy like sunday morning.",
-    #     cover_art = False
+    #     cover_art = False,
+    #     unlocked = renpy.seen_audio("bgm/09 Easy.mp3")
     # )     
     # ost.manualDefineList.append(easy_like_summer)
