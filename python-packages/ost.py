@@ -369,7 +369,8 @@ def mute_player():
 
 def refresh_list():
     scan_song(rescan=True) # scans songs
-    rpa_load_mapping()
+    if not renpy.config.developer:
+        rpa_load_mapping()
     resort()
 
 def resort():
@@ -444,29 +445,16 @@ def def_song(title, artist, path, priority, sec, altAlbum, y, album, comment, ex
     else:
         description = None
 
-    if not rpa:
-        songList[y] = soundtrack(
-            name = title,
-            author = artist,
-            path = path,
-            byteTime = sec,
-            priority = priorityScan,
-            description = description,
-            cover_art = altAlbum,
-            unlocked = unlocked
-        )
-    else:
-        p['class'] = soundtrack(
-            name = title,
-            author = artist,
-            path = path,
-            byteTime = sec,
-            priority = priorityScan,
-            description = description,
-            cover_art = altAlbum,
-            unlocked = unlocked
-        )
-        songList.append(p['class'])
+    songList[y] = soundtrack(
+        name = title,
+        author = artist,
+        path = path,
+        byteTime = sec,
+        priority = priorityScan,
+        description = description,
+        cover_art = altAlbum,
+        unlocked = unlocked
+    )
 
 # maps track files in track folder before building the game
 def rpa_mapping():
@@ -474,9 +462,16 @@ def rpa_mapping():
     global soundtracks
     try: os.remove(gamedir + "/RPASongMetadata.json")
     except: pass
-    for y in soundtracks:
+    for y in songList:
         data.append ({
-            y
+            "class": re.sub(r"-|'| ", "_", y.name),
+            "title": y.name,
+            "artist": y.author,
+            "path": y.path,
+            "sec": y.byteTime,
+            "altAlbum": y.cover_art,
+            "description": y.description,
+            "unlocked": y.unlocked,
         })
     with open(gamedir + "/RPASongMetadata.json", "a") as f:
         json.dump(data, f)
@@ -490,8 +485,20 @@ def rpa_load_mapping():
         data = json.load(f)
 
     for p in data:
-        soundtracks.append(p)
-        
+        title, artist, path, sec, altAlbum, description, unlocked = p['title'], p['artist'], p["path"], p["sec"], p["altAlbum"], p["description"], p["unlocked"]
+
+        p['class'] = soundtrack(
+            name = title,
+            author = artist,
+            path = path,
+            byteTime = sec,
+            priority = priorityScan,
+            description = description,
+            cover_art = altAlbum,
+            unlocked = unlocked
+        )
+        songList.append(p['class'])
+
 try: os.mkdir(gamedir + "/track")
 except: pass
 try: os.mkdir(gamedir + "/track/covers")
