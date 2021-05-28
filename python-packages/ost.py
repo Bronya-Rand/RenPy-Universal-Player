@@ -29,7 +29,7 @@ import renpy.audio.music as music
 import renpy.display.behavior as displayBehavior
 
 # Creation of Music Room and Code Setup
-version = 1.3
+version = 1.4
 music.register_channel("music_room", mixer="music_room_mixer", loop=False)
 if renpy.windows:
     gamedir = renpy.config.gamedir.replace("\\", "/")
@@ -67,11 +67,9 @@ organizeAZ = False
 organizePriority = True
 
 class soundtrack:
-    def __init__(self, name = "", full_name = "", path = "", priority = 2, author = False, byteTime = False, description = False, cover_art = False):
+    def __init__(self, name="", path="", priority=2, author="", byteTime=False, description="", cover_art=False, unlocked=True):
         #name that will be displayed
         self.name = name
-        #name that will be displayed in 
-        self.full_name = full_name
         #path to the music file
         self.path = path
         #priority of the list
@@ -87,6 +85,7 @@ class soundtrack:
             self.cover_art = "images/music_room/nocover.png"
         else:
             self.cover_art = cover_art
+        self.unlocked = unlocked
 
 # Adjustable Bar for track scrolling
 @renpy.exports.pure
@@ -187,7 +186,7 @@ def dynamic_title_text(style_name, st, at):
     if game_soundtrack == False: # failsafe to when user quits out of OST
         return Text("Exiting...", size=int(36 * scale)), 0.0
 
-    title = len(game_soundtrack.full_name) # grabs the length of the name and artist 
+    title = len(game_soundtrack.name) # grabs the length of the name and artist 
 
     if title <= 21: # checks length against set var checks (can be changed) 
         songNameSize = int(37 * scale) 
@@ -196,7 +195,7 @@ def dynamic_title_text(style_name, st, at):
     else:
         songNameSize = int(23 * scale)
 
-    d = Text(game_soundtrack.full_name, style=style_name, substitute=False, size=songNameSize)
+    d = Text(game_soundtrack.name, style=style_name, substitute=False, size=songNameSize)
     return d, 0.20
 
 def dynamic_author_text(style_name, st, at):
@@ -370,6 +369,7 @@ def mute_player():
 
 def refresh_list():
     scan_song(rescan=True) # scans songs
+    rpa_load_mapping()
     resort()
 
 def resort():
@@ -400,9 +400,10 @@ def get_info(path, tags):
                 
         with open(gamedir + '/track/covers/' + altAlbum + cover_formats, 'wb') as f: # writes image data with proper extension to destination
             f.write(image_data)
-        return tags.title, tags.artist, sec, altAlbum, cover_formats, tags.album, tags.comment
+        art = altAlbum + cover_formats
+        return tags.title, tags.artist, sec, art, tags.album, tags.comment
     except TypeError:
-        return tags.title, tags.artist, sec, None, None, tags.album, tags.comment
+        return tags.title, tags.artist, sec, None, tags.album, tags.comment
 
 # Scans tracks to the OST Player
 def scan_song(rescan=False):
@@ -417,24 +418,24 @@ def scan_song(rescan=False):
     for y in range(len(songList)):
         path = songList[y]
         tags = TinyTag.get(gamedir + "/" + path, image=True) 
-        title, artist, sec, altAlbum, cover_formats, album, comment = get_info(path, tags)
-        def_song(title, artist, path, priorityScan, sec, altAlbum, cover_formats, y, album, comment, ext)
+        title, artist, sec, altAlbum, album, comment = get_info(path, tags)
+        def_song(title, artist, path, priorityScan, sec, altAlbum, y, album, comment, ext)
 
 # Makes a class for a track to the OST Player
-def def_song(title, artist, path, priority, sec, altAlbum, cover_formats, y, album, comment, ext, rpa=False):
+def def_song(title, artist, path, priority, sec, altAlbum, y, album, comment, ext, unlocked=True, rpa=False):
     if title is None:
         title = "Unknown " + str(ext) + " File " + str(y)
     if artist is None:
         artist = "Unknown Artist"
-    if cover_formats is None:
+    if altAlbum is None:
         description = "Non-Metadata " + str(ext) + " File"
-        cover_formats = "images/music_room/nocover.png" 
+        altAlbum = "images/music_room/nocover.png" 
     else:
-        cover_formats = "track/covers/"+altAlbum+cover_formats
+        altAlbum = "track/covers/"+altAlbum
         try:
-            renpy.exports.image_size(cover_formats)
+            renpy.exports.image_size(altAlbum)
         except:
-            cover_formats = "images/music_room/nocover.png" 
+            altAlbum = "images/music_room/nocover.png" 
     if album is not None: 
         if comment is not None: 
             description = album + '\n' + comment 
@@ -446,48 +447,36 @@ def def_song(title, artist, path, priority, sec, altAlbum, cover_formats, y, alb
     if not rpa:
         songList[y] = soundtrack(
             name = title,
-            full_name = title,
             author = artist,
             path = path,
             byteTime = sec,
             priority = priorityScan,
             description = description,
-            cover_art = cover_formats
+            cover_art = altAlbum,
+            unlocked = unlocked
         )
     else:
         p['class'] = soundtrack(
             name = title,
-            full_name = title,
             author = artist,
             path = path,
             byteTime = sec,
             priority = priorityScan,
             description = description,
-            cover_art = cover_formats
+            cover_art = altAlbum,
+            unlocked = unlocked
         )
         songList.append(p['class'])
 
 # maps track files in track folder before building the game
 def rpa_mapping():
     data = []
-    for ext in file_types:
-        songList += ["track/" + x for x in os.listdir(gamedir + '/track') if x.endswith(ext)]
+    global soundtracks
     try: os.remove(gamedir + "/RPASongMetadata.json")
     except: pass
-    for y in range(len(songTemp)):
-        path = songTemp[y]
-        tags = TinyTag.get(gamedir + "/" + path, image=True) 
-        title, artist, sec, altAlbum, cover_formats, album, comment = get_info(path, tags) 
+    for y in soundtracks:
         data.append ({
-            "class": re.sub(r"-|'| ", "_", title),
-            "title": title,
-            "artist": artist,
-            "path": path,
-            "sec": sec,
-            "altAlbum": altAlbum,
-            "cover_formats": cover_formats,
-            "album": album,
-            "comment": comment
+            y
         })
     with open(gamedir + "/RPASongMetadata.json", "a") as f:
         json.dump(data, f)
@@ -501,14 +490,7 @@ def rpa_load_mapping():
         data = json.load(f)
 
     for p in data:
-        title, artist, path, sec, altAlbum, cover_formats, album, comment = p['title'], p['artist'], p["path"], p["sec"], p["altAlbum"], p["cover_formats"], p["album"], p["comment"]
-        for x in file_types:
-            if path.endswith(x):
-                ext = x
-            else:
-                ext = "Unknown"
-
-        def_song(title, artist, path, priorityScan, sec, altAlbum, cover_formats, y, album, comment, ext, rpa=True)
+        soundtracks.append(p)
         
 try: os.mkdir(gamedir + "/track")
 except: pass
