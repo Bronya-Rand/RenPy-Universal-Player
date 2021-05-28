@@ -88,12 +88,13 @@ screen music_room():
             spacing gui.navigation_spacing
 
             for st in ost.soundtracks:
-                textbutton "[st.name]":
-                    text_style "music_room_button"
-                    if ost.game_soundtrack:
-                        action [SensitiveIf(ost.game_soundtrack.name != st.name or ost.game_soundtrack.author != st.author or ost.game_soundtrack.description != st.description), SetVariable("ost.game_soundtrack", st), Play("music_room", st.path, loop=ost.loopSong, fadein=2.0)]
-                    else:
-                        action [SetVariable("ost.game_soundtrack", st), Play("music_room", st.path, loop=ost.loopSong, fadein=2.0)]
+                if not st.unlocked:
+                    textbutton "[st.name]":
+                        text_style "music_room_button"
+                        if ost.game_soundtrack:
+                            action [SensitiveIf(ost.game_soundtrack.name != st.name or ost.game_soundtrack.author != st.author or ost.game_soundtrack.description != st.description), SetVariable("ost.game_soundtrack", st), Play("music_room", st.path, loop=ost.loopSong, fadein=2.0)]
+                        else:
+                            action [SetVariable("ost.game_soundtrack", st), Play("music_room", st.path, loop=ost.loopSong, fadein=2.0)]
 
         vbar value YScrollValue("vpo") xpos 1.0 ypos 20
 
