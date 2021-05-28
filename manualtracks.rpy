@@ -10,7 +10,7 @@ init python:
     ######################################
     
     # easy_like_summer = ost.soundtrack(
-    #     name = "Easy", # 
+    #     name = "Easy", 
     #     full_name = "Easy",
     #     path = "bgm/09 Easy.mp3",
     #     priority = 1,

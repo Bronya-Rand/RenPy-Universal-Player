@@ -43,21 +43,17 @@ else:
 
 # Lists for holding media types
 renpyFileList = renpy.exports.list_files(common=False)
-mp3List = []
-oggList = []
-playableMP3List = []
-playableOGGList = []
+songList = []
 manualDefineList = []
 soundtracks = []
+file_types = ['.mp3', '.ogg', '.opus', '.wav']
 
 # Stores soundtrack in progress
 game_soundtrack = False
 
 # Stores positions of track/volume/default priority
-time_position = 0.0 # 
+time_position = 0.0 
 time_duration = 3.0
-soundtrack_position = 0.0
-soundtrack_duration = 0.0
 old_volume = 0.0
 priorityScan = 2
 scale = 1.0
@@ -200,7 +196,7 @@ def dynamic_title_text(style_name, st, at):
     else:
         songNameSize = int(23 * scale)
 
-    d = Text(game_soundtrack.full_name, style=style_name, size=songNameSize)
+    d = Text(game_soundtrack.full_name, style=style_name, substitute=False, size=songNameSize)
     return d, 0.20
 
 def dynamic_author_text(style_name, st, at):
@@ -216,7 +212,7 @@ def dynamic_author_text(style_name, st, at):
     else:
         authorNameSize = int(21 * scale)
 
-    d = Text(game_soundtrack.author, style=style_name, size=authorNameSize)
+    d = Text(game_soundtrack.author, style=style_name, substitute=False, size=authorNameSize)
     return d, 0.20
 
 def refresh_cover_data(st, at):
@@ -268,10 +264,9 @@ def convert_time(x):
 
 # Pauses the song and saves it's pause spot
 def current_music_pause():
-    global soundtrack_position, soundtrack_duration, game_soundtrack_pause
+    global game_soundtrack_pause
 
     soundtrack_position = music.get_pos(channel = 'music_room') + 1.6
-    soundtrack_duration = music.get_duration(channel = 'music_room')
 
     if soundtrack_position is not None:
         game_soundtrack_pause = "<from "+str(soundtrack_position) +">"+game_soundtrack.path
@@ -288,10 +283,10 @@ def current_music_play():
     
 # Forwards track by 5 seconds
 def current_music_forward():
-    global soundtrack_position, soundtrack_duration, game_soundtrack_pause, time_duration
+    global game_soundtrack_pause, time_duration
 
     if music.get_pos(channel = 'music_room') is None:
-        soundtrack_position = soundtrack_position + 5
+        soundtrack_position = time_position + 5
     else:
         soundtrack_position = music.get_pos(channel = 'music_room') + 5
 
@@ -300,7 +295,6 @@ def current_music_forward():
         time_duration = game_soundtrack.byteTime
 
     if soundtrack_position >= soundtrack_duration: 
-        soundtrack_position = 0.0
         game_soundtrack_pause = False
         if randomSong:
             random_song()
@@ -313,15 +307,14 @@ def current_music_forward():
 
 # Rewinds track by 5 seconds
 def current_music_backward():
-    global soundtrack_position, game_soundtrack_pause
+    global game_soundtrack_pause
 
     if music.get_pos(channel = 'music_room') is None:
-        soundtrack_position = soundtrack_position - 5
+        soundtrack_position = time_position - 5
     else:
         soundtrack_position = music.get_pos(channel = 'music_room') - 5
 
     if soundtrack_position <= 0.0:
-        soundtrack_position = 0.0
         game_soundtrack_pause = False
         next_track(back=True)
     else:
@@ -376,16 +369,13 @@ def mute_player():
         renpy.game.preferences.set_volume("music_room_mixer", old_volume)
 
 def refresh_list():
-    scan_mp3() # scans mp3
-    scan_ogg() # scans ogg
+    scan_song(rescan=True) # scans songs
     resort()
 
 def resort():
     global soundtracks
     soundtracks = [] # resets soundtrack list
-    for obj in playableMP3List:
-        soundtracks.append(obj)
-    for obj in playableOGGList:
+    for obj in songList:
         soundtracks.append(obj)
     for obj in manualDefineList:
         soundtracks.append(obj)
@@ -414,89 +404,30 @@ def get_info(path, tags):
     except TypeError:
         return tags.title, tags.artist, sec, None, None, tags.album, tags.comment
 
-#Scans MP3 tracks to the OST Player
-def scan_mp3():
-    global mp3List, playableMP3List
+# Scans tracks to the OST Player
+def scan_song(rescan=False):
+    global songList
 
-    if glob.glob(gamedir + '/track/*.mp3'): 
-        if len(mp3List) != 0: 
-            for x in reversed(range(len(playableMP3List))): 
-                playableMP3List.pop(x)
+    if rescan:
+        songList = []
 
-        mp3List = ["track/" + x for x in os.listdir(gamedir + '/track') if x.endswith(".mp3")] 
-        playableMP3List = ["track/" + x for x in os.listdir(gamedir + '/track') if x.endswith(".mp3")]
+    for ext in file_types:
+        songList += ["track/" + x for x in os.listdir(gamedir + '/track') if x.endswith(ext)]
 
-        mp3ListLength = len(playableMP3List) 
+    for y in range(len(songList)):
+        path = songList[y]
+        tags = TinyTag.get(gamedir + "/" + path, image=True) 
+        title, artist, sec, altAlbum, cover_formats, album, comment = get_info(path, tags)
+        def_song(title, artist, path, priorityScan, sec, altAlbum, cover_formats, y, album, comment, ext)
 
-        for y in range(mp3ListLength):
-            path = playableMP3List[y]
-            tags = TinyTag.get(gamedir + "/" + path, image=True) 
-            title, artist, sec, altAlbum, cover_formats, album, comment = get_info(path, tags)
-            def_mp3(title, artist, path, priorityScan, sec, altAlbum, cover_formats, y, album, comment)
-
-# Scans OGG tracks to the OST Player
-def scan_ogg():
-    global oggList, playableOGGList
-
-    if glob.glob(gamedir + '/track/*.ogg'): 
-
-        if len(oggList) != 0:
-            for x in reversed(range(len(playableOGGList))): 
-                playableOGGList.pop(x)
-
-        oggList = ["track/" + x for x in os.listdir(gamedir + '/track') if x.endswith(".ogg")]
-        playableOGGList = ["track/" + x for x in os.listdir(gamedir + '/track') if x.endswith(".ogg")]
-
-        oggListLength = len(playableOGGList)
-
-        for y in range(oggListLength):
-            path = playableOGGList[y]
-            tags = TinyTag.get(gamedir + "/" + path, image=True) 
-            title, artist, sec, altAlbum, cover_formats, album, comment = get_info(path, tags) 
-            def_ogg(title, artist, path, priorityScan, sec, altAlbum, cover_formats, y, album, comment) 
-
-# Makes a OGG class for a OGG track to the OST Player
-def def_ogg(title, artist, path, priority, sec, altAlbum, cover_formats, y, album, comment):
-    if title is None: 
-        title = "Unknown OGG File " + str(y)
-    if artist is None: 
-        artist = "Unknown Artist"
-    if cover_formats is None: 
-        description = "Non-Metadata OGG"
-        cover_formats = "images/music_room/nocover.png" 
-    else:
-        cover_formats = "track/covers/"+altAlbum+cover_formats
-        try:
-            renpy.exports.image_size(cover_formats)
-        except:
-            cover_formats = "images/music_room/nocover.png" 
-    if album is not None: 
-        if comment is not None: 
-            description = album + '\n' + comment 
-        else:
-            description = album 
-    else:
-        description = None 
-        
-    playableOGGList[y] = soundtrack(
-        name = title,
-        full_name = title,
-        author = artist,
-        path = path,
-        byteTime = sec,
-        priority = priorityScan,
-        description = description,
-        cover_art = cover_formats
-    )
-
-# Makes a MP3 class for a MP3 track to the OST Player
-def def_mp3(title, artist, path, priority, sec, altAlbum, cover_formats, y, album, comment):
+# Makes a class for a track to the OST Player
+def def_song(title, artist, path, priority, sec, altAlbum, cover_formats, y, album, comment, ext, rpa=False):
     if title is None:
-        title = "Unknown MP3 File " + str(y)
+        title = "Unknown " + str(ext) + " File " + str(y)
     if artist is None:
         artist = "Unknown Artist"
     if cover_formats is None:
-        description = "Non-Metadata MP3"
+        description = "Non-Metadata " + str(ext) + " File"
         cover_formats = "images/music_room/nocover.png" 
     else:
         cover_formats = "track/covers/"+altAlbum+cover_formats
@@ -512,21 +443,35 @@ def def_mp3(title, artist, path, priority, sec, altAlbum, cover_formats, y, albu
     else:
         description = None
 
-    playableMP3List[y] = soundtrack(
-        name = title,
-        full_name = title,
-        author = artist,
-        path = path,
-        byteTime = sec,
-        priority = priorityScan,
-        description = description,
-        cover_art = cover_formats
-    )
+    if not rpa:
+        songList[y] = soundtrack(
+            name = title,
+            full_name = title,
+            author = artist,
+            path = path,
+            byteTime = sec,
+            priority = priorityScan,
+            description = description,
+            cover_art = cover_formats
+        )
+    else:
+        p['class'] = soundtrack(
+            name = title,
+            full_name = title,
+            author = artist,
+            path = path,
+            byteTime = sec,
+            priority = priorityScan,
+            description = description,
+            cover_art = cover_formats
+        )
+        songList.append(p['class'])
 
 # maps track files in track folder before building the game
 def rpa_mapping():
     data = []
-    songTemp = ["track/" + x for x in os.listdir(gamedir + '/track') if x.endswith(".mp3") or x.endswith(".ogg")]
+    for ext in file_types:
+        songList += ["track/" + x for x in os.listdir(gamedir + '/track') if x.endswith(ext)]
     try: os.remove(gamedir + "/RPASongMetadata.json")
     except: pass
     for y in range(len(songTemp)):
@@ -557,47 +502,20 @@ def rpa_load_mapping():
 
     for p in data:
         title, artist, path, sec, altAlbum, cover_formats, album, comment = p['title'], p['artist'], p["path"], p["sec"], p["altAlbum"], p["cover_formats"], p["album"], p["comment"]
-            
-        if title is None: 
-            title = "Unknown RPA Song " + str(p)
-        if artist is None: 
-            artist = "Unknown Artist"
-        if cover_formats is None: 
-            description = "Unknown RPA Song File"
-            cover_formats = "images/music_room/nocover.png" 
-        else:
-            cover_formats = "track/covers/"+altAlbum+cover_formats
-            try:
-                renpy.exports.image_size(cover_formats)
-            except:
-                cover_formats = "images/music_room/nocover.png" 
-        if album is not None: 
-            if comment is not None: 
-                description = album + '\n' + comment 
+        for x in file_types:
+            if path.endswith(x):
+                ext = x
             else:
-                description = album 
-        else:
-            description = None 
+                ext = "Unknown"
 
-        p['class'] = soundtrack(
-            name = title,
-            full_name = title,
-            author = artist,
-            path = path,
-            byteTime = sec,
-            priority = priorityScan,
-            description = description,
-            cover_art = cover_formats
-        )
-        manualDefineList.append(p['class'])
-
+        def_song(title, artist, path, priorityScan, sec, altAlbum, cover_formats, y, album, comment, ext, rpa=True)
+        
 try: os.mkdir(gamedir + "/track")
 except: pass
 try: os.mkdir(gamedir + "/track/covers")
 except: pass
 
-scan_mp3()
-scan_ogg()
+scan_song()
 
 # checks for non-existant song covers for cleaning the covers directory
 cover_list = ["track/covers/" + x for x in os.listdir(gamedir + '/track/covers')] 
