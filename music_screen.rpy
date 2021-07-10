@@ -88,7 +88,7 @@ screen music_room():
             spacing gui.navigation_spacing
 
             for st in ost.soundtracks:
-                if not st.unlocked:
+                if st.unlocked:
                     textbutton "[st.name]":
                         text_style "music_room_button"
                         if ost.game_soundtrack:
