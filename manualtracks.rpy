@@ -1,6 +1,6 @@
 ﻿# This RPY is a base template on defining songs manually that aren't located in
 # the track folder. Use the commented sample below as a base to manually
-# add songs from your projects to here. (MP3/OGG only ATM)
+# add songs from your projects to here.
 
 init python:
     # imports the OST library. Leave this as-is.
