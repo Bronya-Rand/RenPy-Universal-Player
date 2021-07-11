@@ -8,10 +8,11 @@ Ren'Py-Universal-Player or (Ren'Py UOST-Player) is a enhanced music room for Ren
 ## Features
 * MP3, OGG/OPUS, and WMA Playback from a folder or inside a RPA/APK file.
 * Metadata support for tracks.
-* Music Player controls.
+* Music player controls.
 * Dynamic Font Scaling for Titles (some-what).
 * Sorting support.
 * Based off the Ren'Py auto-generated template screen.
+* Music unlock support.
 
 ## What do I need to run this?
 1. A Ren’Py project (new or existing).
@@ -26,8 +27,6 @@ Ren'Py-Universal-Player or (Ren'Py UOST-Player) is a enhanced music room for Ren
    ```
 3. **(Optional)** Add some music to the <u>track</u> folder.
 4. Run your project and enter the Music Room!
-
-> Note: Please do be advised that 
 
 ## What can I customize in Ren'Py UOST-Player?
 Pretty much anything. This is based off the auto-generated Ren'Py template so everything is good for you to use as-is. Just change the settings under <u>music_screen.rpy</u>.
