@@ -1,13 +1,12 @@
 # Ren'Py Universal Player (Ren'Py UOST-Player)
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K3K22K8SU)
 
-<u>Current Version:</u> [**1.4**](https://github.com/GanstaKingofSA/RenPy-Universal-Player/releases/latest)
+<u>Current Version:</u> [**1.5**](https://github.com/GanstaKingofSA/RenPy-Universal-Player/releases/latest)
 
 Ren'Py-Universal-Player or (Ren'Py UOST-Player) is a enhanced music room for Ren'Py projects that allows users to play tracks outside the game's story along with sideloaded songs. 
 
 ## Features
 * MP3, OGG/OPUS, and WMA Playback from a folder or inside a RPA/APK file.
-  > You will need to enable Developer Mode in order to make the metadata of songs generate for distribution.
 * Metadata support for tracks.
 * Music Player controls.
 * Dynamic Font Scaling for Titles (some-what).
@@ -27,6 +26,8 @@ Ren'Py-Universal-Player or (Ren'Py UOST-Player) is a enhanced music room for Ren
    ```
 3. **(Optional)** Add some music to the <u>track</u> folder.
 4. Run your project and enter the Music Room!
+
+> Note: Please do be advised that 
 
 ## What can I customize in Ren'Py UOST-Player?
 Pretty much anything. This is based off the auto-generated Ren'Py template so everything is good for you to use as-is. Just change the settings under <u>music_screen.rpy</u>.
@@ -49,7 +50,7 @@ Enable the numbered list icon in the music room and set the song priority by a v
 > You may also enable this by setting *organizePriority* to True within <u>ost.py</u>.
 
 ## How do I organize the list alphabetically?
-Enable the AZ iconin the music room or set *organizeAZ* to <u>True</u> within <u>ost.py</u>.
+Enable the AZ icon in the music room or set *organizeAZ* to <u>True</u> within <u>ost.py</u>.
 
 ## How do I make songs locked from the player?
 As of now, the way to make a song unlock is by manually defining a song in <u>manualtracks.rpy</u>. You can see a example on how this works in within the RPY file and under the **How do I manually define a song?** section of this Readme.
