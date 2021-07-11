@@ -185,7 +185,7 @@ screen music_room():
     textbutton _("Return"):
         style "return_button"
 
-        action [Return(), If(renpy.music.is_playing(channel='music_room'), true=Function(ost.current_music_pause), false=None), If(ost.music_muted, true=None, false=SetMute('music', False)), SetVariable("ost.music_muted", False)]
+        action [Return(), If(renpy.music.is_playing(channel='music_room'), true=Function(ost.current_music_pause), false=None), If(ost.prevTrack == False, true=None, false=Play('music', ost.prevTrack, fadein=2.0))]
 
 style music_room_frame is empty
 style music_room_viewport is gui_viewport

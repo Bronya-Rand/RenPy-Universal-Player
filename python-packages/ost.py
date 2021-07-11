@@ -42,7 +42,6 @@ else:
 
 
 # Lists for holding media types
-renpyFileList = renpy.exports.list_files(common=False)
 songList = []
 manualDefineList = []
 soundtracks = []
@@ -60,7 +59,7 @@ scale = 1.0
 
 # Stores paused track/player controls
 game_soundtrack_pause = False
-music_muted = False
+prevTrack = False
 randomSong = False
 loopSong = False
 organizeAZ = False
@@ -500,6 +499,12 @@ def rpa_load_mapping():
             unlocked = unlocked
         )
         songList.append(p['class'])
+
+def get_music_channel_info():
+    global prevTrack
+    prevTrack = music.get_playing(channel='music')
+    if prevTrack is None:
+        prevTrack = False
 
 try: os.mkdir(gamedir + "/track")
 except: pass
