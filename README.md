@@ -22,7 +22,7 @@ Ren'Py-Universal-Player or (Ren'Py UOST-Player) is a enhanced music room for Ren
 1. Drop all the contents in this ZIP file to your projects' *game* folder.
 2.	Open <u>screens.rpy</u> and add this line somewhere after line `292` under the *screen navigation():* block.
    ```py
-   textbutton _("Music Room") action [ShowMenu("music_room"), Stop('music', fadeout=2.0), If(preferences.get_volume("music") == 0.0, true=SetVariable("ost.music_muted", True), false=SetMute('music', True)), Function(ost.refresh_list)]
+   textbutton _("Music Room") action [ShowMenu("music_room"), Function(ost.get_music_channel_info), Stop('music', fadeout=2.0), Function(ost.refresh_list)]
    ```
 3. **(Optional)** Add some music to the <u>track</u> folder.
 4. Run your project and enter the Music Room!
