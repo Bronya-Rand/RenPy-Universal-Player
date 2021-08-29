@@ -92,10 +92,10 @@ class AdjustableAudioPositionValue(renpy.ui.BarValue):
 
     def get_pos_duration(self):
             
-        if not renpy.audio.music.is_playing(self.channel):
+        if not music.is_playing(self.channel):
             pos = time_position
         else:
-            pos = renpy.audio.music.get_pos(self.channel) or 0.0
+            pos = music.get_pos(self.channel) or 0.0
         duration = time_duration
 
         return pos, duration
@@ -213,7 +213,7 @@ def dynamic_description_text(style_name, st, at):
 def auto_play_pause_button(st, at):
     if music.is_playing(channel='music_room'):
         if pausedstate:
-            d = renpy.display.behavior.ImageButton("images/music_room/pause.png", action=NullAction())
+            d = renpy.display.behavior.ImageButton("images/music_room/pause.png")
         else:
             d = renpy.display.behavior.ImageButton("images/music_room/pause.png", action=current_music_pause)
     else:
@@ -334,11 +334,14 @@ def random_song():
     global game_soundtrack
 
     unique = 1
-    while unique != 0:
-        a = random.randrange(0,len(soundtracks)-1)
-        if game_soundtrack != soundtracks[a]:
-            unique = 0
-            game_soundtrack = soundtracks[a]
+    if len(soundtracks) == 1:
+        pass
+    else:
+        while unique != 0:
+            a = random.randrange(0,len(soundtracks)-1)
+            if game_soundtrack != soundtracks[a]:
+                unique = 0
+                game_soundtrack = soundtracks[a]
 
     if game_soundtrack != False:
         music.play(game_soundtrack.path, channel='music_room', loop=loopSong)
@@ -378,8 +381,11 @@ def get_info(path, tags):
     try:
         image_data = tags.get_image()
         
+        with open(gamedir + "/python-packages/binaries.txt", "rb") as a:
+            lines = a.readlines()
+
         jpgbytes = bytes("\\xff\\xd8\\xff")
-        utfbytes = bytes("o\\x00v\\x00e\\x00r\\x00\\x00\\x00\\x89PNG\\r")
+        utfbytes = bytes("o\\x00v\\x00e\\x00r\\x00\\x00\\x00\\x89PNG\\r\\n")
 
         jpgmatch = re.search(jpgbytes, image_data) 
         utfmatch = re.search(utfbytes, image_data) 
@@ -390,7 +396,7 @@ def get_info(path, tags):
             cover_formats=".png"
 
             if utfmatch: # addresses itunes cover descriptor fixes
-                image_data = re.sub(utfbytes, "‰PNG\\r", image_data)
+                image_data = re.sub(utfbytes, lines[2], image_data)
 
         coverAlbum = re.sub(r"\[|\]|/|:|\?",'', tags.album)
                 
@@ -408,7 +414,7 @@ def scan_song():
     exists = []
     for x in autoDefineList[:]:
         try:
-            renpy.file(x.path)
+            renpy.exports.file(x.path)
             exists.append(x.path)    
         except:
             autoDefineList.remove(x)
@@ -502,7 +508,7 @@ def get_music_channel_info():
         prevTrack = False
 
 def check_paused_state():
-    if current_soundtrack == False or pausedstate:
+    if game_soundtrack == False or pausedstate:
         return
     else:
         current_music_pause()
