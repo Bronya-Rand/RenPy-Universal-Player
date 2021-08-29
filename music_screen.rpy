@@ -89,11 +89,11 @@ screen music_room():
 
             for st in ost.soundtracks:
                 textbutton "[st.name]":
-                    text_style "music_room_button"
+                    text_style "music_room_list_button"
                     if ost.game_soundtrack:
-                        action [SensitiveIf(ost.game_soundtrack.name != st.name or ost.game_soundtrack.author != st.author or ost.game_soundtrack.description != st.description), SetVariable("ost.game_soundtrack", st), Play("music_room", st.path, loop=ost.loopSong, fadein=2.0)]
+                        action [SensitiveIf(ost.game_soundtrack.name != st.name or ost.game_soundtrack.author != st.author or ost.game_soundtrack.description != st.description), SetVariable("ost.game_soundtrack", st), SetVariable("ost.pausedstate", False), Play("music_room", st.path, loop=ost.loopSong, fadein=2.0)]
                     else:
-                        action [SetVariable("ost.game_soundtrack", st), Play("music_room", st.path, loop=ost.loopSong, fadein=2.0)]
+                        action [SetVariable("ost.game_soundtrack", st), SetVariable("ost.pausedstate", False), Play("music_room", st.path, loop=ost.loopSong, fadein=2.0)]
 
         vbar value YScrollValue("vpo") xpos 1.0 ypos 20
 
@@ -104,13 +104,10 @@ screen music_room():
             add "coverArt" at cover_art_fade
 
         if ost.game_soundtrack.author:
-
             vbox:
-
                 hbox: 
                     vbox:
                         add "titleName"
-
                 hbox:
                     vbox:
                         add "authorName"
@@ -125,12 +122,14 @@ screen music_room():
 
             imagebutton:
                 idle At("images/music_room/backward.png", imagebutton_scale)
+                hover At("images/music_room/backwardHover.png", imagebutton_scale)
                 action [SensitiveIf(renpy.music.is_playing(channel='music_room')), Function(ost.current_music_backward)]
             
             add "playPauseButton" at imagebutton_scale
             
             imagebutton:
                 idle At("images/music_room/forward.png", imagebutton_scale)
+                hover At("images/music_room/forwardHover.png", imagebutton_scale)
                 action [SensitiveIf(renpy.music.is_playing(channel='music_room')), Function(ost.current_music_forward)]
 
         hbox:
@@ -139,22 +138,27 @@ screen music_room():
 
             imagebutton:
                 idle At(ConditionSwitch("ost.organizeAZ", "images/music_room/A-ZOn.png", "True", "images/music_room/A-Z.png"), imagebutton_scale)
+                hover At("images/music_room/A-ZHover.png", imagebutton_scale)
                 action [ToggleVariable("ost.organizeAZ", False, True), Function(ost.resort)]
             
             imagebutton:
                 idle At(ConditionSwitch("ost.organizePriority", "images/music_room/priorityOn.png", "True", "images/music_room/priority.png"), imagebutton_scale)
+                hover At("images/music_room/priorityHover.png", imagebutton_scale)
                 action [ToggleVariable("ost.organizePriority", False, True), Function(ost.resort)]
             
             imagebutton:
                 idle At(ConditionSwitch("ost.loopSong", "images/music_room/replayOn.png", "True", "images/music_room/replay.png"), imagebutton_scale)
+                hover At("images/music_room/replayHover.png", imagebutton_scale)
                 action [ToggleVariable("ost.loopSong", False, True)]
             
             imagebutton:
                 idle At(ConditionSwitch("ost.randomSong", "images/music_room/shuffleOn.png", "True", "images/music_room/shuffle.png"), imagebutton_scale)
+                hover At("images/music_room/shuffleHover.png", imagebutton_scale)
                 action [ToggleVariable("ost.randomSong", False, True)]
             
             imagebutton:
                 idle At("images/music_room/refreshList.png", imagebutton_scale)
+                hover At("images/music_room/refreshHover.png", imagebutton_scale)
                 action [Function(ost.refresh_list)]
 
         bar:
@@ -168,10 +172,11 @@ screen music_room():
         imagebutton:
             style "music_room_volume_options"
             idle At(ConditionSwitch("preferences.get_volume(\"music_room_mixer\") == 0.0", "images/music_room/volume.png", "True", "images/music_room/volumeOn.png"), imagebutton_scale)
+            hover At(ConditionSwitch("preferences.get_volume(\"music_room_mixer\") == 0.0", "images/music_room/volumeHover.png", "True", "images/music_room/volumeOnHover.png"), imagebutton_scale)
             action [Function(ost.mute_player)]
             
-        add "readablePos"
-        add "readableDur"
+        add "readablePos" xalign 0.28 yalign 0.79
+        add "readableDur" xalign 0.79 yalign 0.79
 
     text "Ren'Py Universal Player v[ost.version]":
         xalign 1.0 yalign 1.0
@@ -183,15 +188,14 @@ screen music_room():
 
     textbutton _("Return"):
         style "return_button"
-
-        action [Return(), If(renpy.music.is_playing(channel='music_room'), true=Function(ost.current_music_pause), false=None), If(ost.prevTrack == False, true=None, false=Play('music', ost.prevTrack, fadein=2.0))]
+        action [Return(), Function(ost.check_paused_state), If(renpy.music.is_playing(channel='music_room'), true=Function(ost.current_music_pause), false=None), If(ost.prevTrack == False, true=None, false=Play('music', ost.prevTrack, fadein=2.0))]
 
 style music_room_frame is empty
 style music_room_viewport is gui_viewport
 style music_room_progress_bar is gui_slider
 style music_room_volume_bar is gui_slider
 style music_room_volume_options is gui_button
-style music_room_button is gui_button
+style music_room_list_button is gui_button
 style music_room_control_options is gui_button
 style music_room_setting_options is gui_button
 style music_room_information_text is gui_text
@@ -203,12 +207,13 @@ style music_room_frame:
 
     background "gui/overlay/main_menu.png"
 
-style music_room_button is default:
-    font gui.text_font
+style music_room_list_button is default:
     size gui.interface_text_size
     hover_color gui.hover_color
     selected_color gui.selected_color
     insensitive_color gui.insensitive_color
+    #hover_sound gui.hover_sound
+    #activate_sound gui.activate_sound
     line_spacing 5
 
 style music_room_viewport:
