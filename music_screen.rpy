@@ -137,7 +137,7 @@ screen music_room():
 
             imagebutton:
                 idle At("images/music_room/backward.png", imagebutton_scale)
-                hover At(("images/music_room/backwardHover.png", imagebutton_scale))
+                hover At("images/music_room/backwardHover.png", imagebutton_scale)
                 action [SensitiveIf(renpy.music.is_playing(channel='music_room')), 
                         Function(ost.current_music_backward)]
             
