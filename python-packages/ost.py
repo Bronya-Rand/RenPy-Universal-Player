@@ -441,7 +441,7 @@ def mute_player():
         old_volume = renpy.game.preferences.get_volume("music_room_mixer")
         renpy.game.preferences.set_volume("music_room_mixer", 0.0)
     else:
-        if old_volume is 0.0:
+        if old_volume == 0.0:
             renpy.game.preferences.set_volume("music_room_mixer", 0.5)
         else:
             renpy.game.preferences.set_volume("music_room_mixer", old_volume)
