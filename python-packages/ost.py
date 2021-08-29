@@ -422,7 +422,7 @@ def random_song():
         pass
     else:
         while unique != 0:
-            a = random.randrange(0,len(soundtracks)-1)
+            a = random.randrange(0, len(soundtracks)-1)
             if game_soundtrack != soundtracks[a]:
                 unique = 0
                 game_soundtrack = soundtracks[a]
