@@ -2,8 +2,7 @@
 
 In general I am fine with any pull requests that adds, fixes or improves the code in this project. At most I would ask for the following
 
-1. State the PR's intended purpose
-2. If possible, state the PR purpose like adding support for X, fix for Y, improved code for Z, etc.
+* State the PR's intended purpose like adding support for X, fix for Y, improved code for Z, etc.
    > If your PR is a fix for the project, please state the original intention and expected result and error you get. Screenshots of the issue are useful too.
 
 Here is a sample PR for fixing code in `ost.py`

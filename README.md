@@ -5,14 +5,31 @@
 
 Ren'Py-Universal-Player or (Ren'Py UOST-Player) is a enhanced music room for Ren'Py projects that allows users to play tracks outside the game's story along with sideloaded songs. 
 
+## Credits
+- Nikso - Original DDLC Music Player Developer
+- Sam Kujo#9403 - Original DDLC Music Player Design and Beta Tester
+- Staryxz#3613 - Original DDLC Music Player Beta Tester
+- Tom Rothamel - Feedback
+- RyzekNoavek#0624 - Adjustable Play Bar Code
+- khaase (Pixabay) - Refresh Icon (UOST-Player 1.0 - 1.2)
+- eugenialcala (Pixabay) - Replay Icon (UOST-Player 1.0 - 1.2)
+- raphaelsilva (Pixabay) - Shuffle Icon (UOST-Player 1.0 - 1.2)
+- Josy_Dom_Alexis (Pixabay) - Volume Icon (UOST-Player 1.0 - 1.2)
+- Google - Noto Sans SC Font (Author/Description Tag) and Icons (UOST-Player 1.3 onwards)
+- Ren'Py Discord - Feedback on Ren'Py Universal Player Features
+- Weiss Schnee - Support (Weiss :D)
+
 ## Features
-* MP3, OGG/OPUS, and WMA Playback from a folder or inside a RPA/APK file.
-* Metadata support for tracks.
-* Music player controls.
-* Dynamic Font Scaling for Titles (some-what).
-* Sorting support.
-* Based off the Ren'Py auto-generated template screen.
-* Music unlock support.
+1. MP3, OGG/OPUS, and WMA Playback from a folder or inside a RPA/APK file.
+2. Metadata support for tracks.
+3. Music player controls.
+4. Dynamic Font Scaling for Titles (some-what).
+5. Sorting support.
+6. Based off the Ren'Py auto-generated template screen.
+7. Music unlock support.
+8. RPA/APK Playback and Metadata Support
+   > You will need to enable Developer Mode in order to make the metadata of songs in the track RPA folder generate for distribution.
+9. Android Support!
 
 ## What do I need to run this?
 1. A Ren’Py project (new or existing).
@@ -21,16 +38,16 @@ Ren'Py-Universal-Player or (Ren'Py UOST-Player) is a enhanced music room for Ren
 ## How do I install this?
 
 1. Drop all the contents in this ZIP file to your projects' *game* folder.
-2.	Open <u>screens.rpy</u> and add this line somewhere after line `292` under the *screen navigation():* block.
+2.	Open <u>screens.rpy</u> and add this line somewhere after line `291` under the *screen navigation():* block.
    ```py
-   textbutton _("Music Room") action [ShowMenu("music_room"), Function(ost.get_music_channel_info), Stop('music', fadeout=2.0), Function(ost.refresh_list)]
+   textbutton _("Music Room") action [ShowMenu("music_room"), Function(ost.get_music_channel_info), 
+                                    Stop('music', fadeout=2.0), Function(ost.refresh_list)]
    ```
 3. **(Optional)** Add some music to the <u>track</u> folder.
 4. Run your project and enter the Music Room!
 
 ## What can I customize in Ren'Py UOST-Player?
 Pretty much anything. This is based off the auto-generated Ren'Py template so everything is good for you to use as-is. Just change the settings under <u>music_screen.rpy</u>.
-> If you plan to change the track folder name to something else, do let people know about this change if they want to add tracks to your game with your projects' music files. Don’t forget to change the name of the folder in <u>ost.py</u>!
 
 ## How do I manually define a song?
 <u>manualtracks.rpy</u> has a small template to define songs manually if you need to do so. You have the following options to define these tracks.
@@ -48,15 +65,8 @@ unlocked | Allows a song to be shown to the player or not.
 Enable the numbered list icon in the music room and set the song priority by a value. 0 is the highest priority you can make a song be while 1, 2, etc. will be prioritzed lower in the list. i.e. 0 > 1 > 2 > ...
 > You may also enable this by setting *organizePriority* to True within <u>ost.py</u>.
 
-## How do I organize the list alphabetically?
-Enable the AZ icon in the music room or set *organizeAZ* to <u>True</u> within <u>ost.py</u>.
-
 ## How do I make songs locked from the player?
 As of now, the way to make a song unlock is by manually defining a song in <u>manualtracks.rpy</u>. You can see a example on how this works in within the RPY file and under the **How do I manually define a song?** section of this Readme.
-
-## Why is there files in the <u>python-packages</u> folder?
-
-These handles handle the functions of the music room player and the metadata of songs sideloaded or those that have metadata in the game.
 
 ## How do I add metadata info?
 Right-click your song, Select <u>Properties</u>, go to <u>Details</u>, and fill the blank boxes you can.
