@@ -38,8 +38,8 @@ define gui.music_room_volume_options_ypos = int(509 * ost.scale)
 ## The positions for the music progress/duration time text
 define gui.music_room_progress_text_xpos = int(330 * ost.scale)
 define gui.music_room_text_size = gui.interface_text_size
-define gui.music_room_duration_text_xpos = int(975 * ost.scale)
-define gui.music_room_progress_text_ypos = int(550 * ost.scale)
+define gui.music_room_progress_text_xalign = 0.28 * ost.scale
+define gui.music_room_progress_text_yalign = 0.79 * ost.scale
 
 ## The positions for the cover art and it's transform properties
 define gui.music_room_cover_art_xpos = int(500 * ost.scale)
@@ -50,7 +50,7 @@ init python:
 
     if renpy.variant('small'):
         gui.music_room_text_size = int(24 * ost.scale)
-        gui.music_room_progress_text_ypos = int(560 * ost.scale)
+        gui.music_room_progress_text_yalign = 0.81 * ost.scale
         gui.music_room_volume_options_xpos = int(1080 * ost.scale)
         gui.music_room_volume_options_ypos = int(514 * ost.scale)
         gui.music_room_options_button_size = int(40 * ost.scale)
@@ -208,8 +208,8 @@ screen music_room():
                     "images/music_room/volumeOnHover.png"), imagebutton_scale)
             action [Function(ost.mute_player)]
             
-        add "readablePos" xalign 0.28 yalign 0.79
-        add "readableDur" xalign 0.79 yalign 0.79
+        add "readablePos" 
+        add "readableDur"
 
     text "Ren'Py Universal Player v[ost.version]":
         xalign 1.0 yalign 1.0
@@ -286,12 +286,12 @@ style music_room_volume_options:
 
 style music_room_progress_text:
     font gui.interface_text_font
-    xpos gui.music_room_progress_text_xpos 
-    ypos gui.music_room_progress_text_ypos
+    xalign gui.music_room_progress_text_xalign
+    yalign gui.music_room_progress_text_yalign
     size gui.music_room_text_size
 
 style music_room_duration_text is music_room_progress_text:
-    xpos gui.music_room_duration_text_xpos 
+    xalign 0.79 * ost.scale
 
 style music_room_information_vbox:
     xsize gui.music_room_information_xsize
