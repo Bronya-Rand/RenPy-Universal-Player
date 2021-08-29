@@ -154,31 +154,31 @@ screen music_room():
             style "music_room_setting_options"
 
             imagebutton:
-                idle At(ConditionSwitch(("ost.organizeAZ", "images/music_room/A-ZOn.png", 
-                        "True", "images/music_room/A-Z.png")), imagebutton_scale)
+                idle At(ConditionSwitch("ost.organizeAZ", "images/music_room/A-ZOn.png", 
+                        "True", "images/music_room/A-Z.png"), imagebutton_scale)
                 hover At("images/music_room/A-ZHover.png", imagebutton_scale)
                 action [ToggleVariable("ost.organizeAZ", False, True), 
                         Function(ost.resort)]
             
             imagebutton:
-                idle At(ConditionSwitch(("ost.organizePriority", 
+                idle At(ConditionSwitch("ost.organizePriority", 
                 "images/music_room/priorityOn.png", "True", 
-                "images/music_room/priority.png")), imagebutton_scale)
+                "images/music_room/priority.png"), imagebutton_scale)
                 hover At("images/music_room/priorityHover.png", imagebutton_scale)
                 action [ToggleVariable("ost.organizePriority", False, True), 
                         Function(ost.resort)]
             
             imagebutton:
-                idle At((ConditionSwitch("ost.loopSong", 
+                idle At(ConditionSwitch("ost.loopSong", 
                 "images/music_room/replayOn.png", "True", 
-                "images/music_room/replay.png")), imagebutton_scale)
+                "images/music_room/replay.png"), imagebutton_scale)
                 hover At("images/music_room/replayHover.png", imagebutton_scale)
                 action [ToggleVariable("ost.loopSong", False, True)]
             
             imagebutton:
-                idle At(ConditionSwitch(("ost.randomSong", 
+                idle At(ConditionSwitch("ost.randomSong", 
                         "images/music_room/shuffleOn.png", "True", 
-                        "images/music_room/shuffle.png")), imagebutton_scale)
+                        "images/music_room/shuffle.png"), imagebutton_scale)
                 hover At("images/music_room/shuffleHover.png", imagebutton_scale)
                 action [ToggleVariable("ost.randomSong", False, True)]
             
@@ -197,12 +197,12 @@ screen music_room():
 
         imagebutton:
             style "music_room_volume_options"
-            idle At(ConditionSwitch(("preferences.get_volume(\"music_room_mixer\") == 0.0", 
+            idle At(ConditionSwitch("preferences.get_volume(\"music_room_mixer\") == 0.0", 
                     "images/music_room/volume.png", "True", 
-                    "images/music_room/volumeOn.png")), imagebutton_scale)
-            hover At(ConditionSwitch(("preferences.get_volume(\"music_room_mixer\") == 0.0", 
+                    "images/music_room/volumeOn.png"), imagebutton_scale)
+            hover At(ConditionSwitch("preferences.get_volume(\"music_room_mixer\") == 0.0", 
                     "images/music_room/volumeHover.png", "True", 
-                    "images/music_room/volumeOnHover.png")), imagebutton_scale)
+                    "images/music_room/volumeOnHover.png"), imagebutton_scale)
             action [Function(ost.mute_player)]
             
         add "readablePos" xalign 0.28 yalign 0.79
