@@ -452,7 +452,7 @@ def refresh_list():
     '''
 
     scan_song() 
-    if not renpy.config.developer or renpy.config.developer == "auto":
+    if renpy.config.developer or renpy.config.developer == "auto":
         rpa_mapping()
     resort()
 
@@ -536,7 +536,7 @@ def scan_song():
                     comment, True)
 
 def def_song(title, artist, path, priority, sec, altAlbum, album, comment,
-            unlocked):
+            unlocked=True):
     '''
     Defines the song to the music player list.
     '''
