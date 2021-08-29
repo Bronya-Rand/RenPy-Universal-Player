@@ -12,8 +12,8 @@ define gui.music_room_viewport_ysize = 0.93
 
 ## The positions and sizes of the music information text
 define gui.music_room_information_xpos = int(700 * ost.scale)
-define gui.music_room_information_ypos = int(220 * ost.scale)
-define gui.music_room_information_xsize = int(580 * ost.scale)
+define gui.music_room_information_ypos = int(208 * ost.scale)
+define gui.music_room_information_xsize = int(570 * ost.scale)
 
 ## The positions and sizes of the music controls
 define gui.music_room_options_xpos = int(715 * ost.scale)
@@ -122,17 +122,17 @@ screen music_room():
             vbox:
                 hbox: 
                     vbox:
-                        style_prefix "music_room_information_vbox"
+                        style_prefix "music_room_information"
                         add "titleName"
                 hbox:
                     vbox:
-                        style_prefix "music_room_information_vbox"
+                        style_prefix "music_room_information"
                         add "authorName"
 
                 if ost.game_soundtrack.description:
                     hbox:
                         vbox:
-                            style_prefix "music_room_information_vbox"
+                            style_prefix "music_room_information"
                             add "songDescription"
 
         hbox:
