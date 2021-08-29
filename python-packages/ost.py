@@ -418,7 +418,7 @@ def random_song():
     global game_soundtrack
 
     unique = 1
-    if len(soundtracks) == 1:
+    if soundtracks[-1].path == game_soundtrack.path:
         pass
     else:
         while unique != 0:
@@ -470,7 +470,7 @@ def resort():
     for obj in manualDefineList:
         if obj.unlocked:
             soundtracks.append(obj)
-            
+
     if organizeAZ:
         soundtracks = sorted(soundtracks, key=lambda soundtracks: 
                             soundtracks.name)
