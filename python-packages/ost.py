@@ -463,12 +463,14 @@ def resort():
 
     global soundtracks
     soundtracks = []
+
     for obj in autoDefineList:
         if obj.unlocked:
             soundtracks.append(obj)
     for obj in manualDefineList:
         if obj.unlocked:
             soundtracks.append(obj)
+            
     if organizeAZ:
         soundtracks = sorted(soundtracks, key=lambda soundtracks: 
                             soundtracks.name)
