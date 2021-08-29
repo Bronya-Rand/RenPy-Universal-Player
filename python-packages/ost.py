@@ -104,7 +104,6 @@ class AdjustableAudioPositionValue(renpy.ui.BarValue):
         self._hovered = False
 
     def get_pos_duration(self):
-            
         if not music.is_playing(self.channel):
             pos = time_position
         else:
@@ -138,9 +137,9 @@ class AdjustableAudioPositionValue(renpy.ui.BarValue):
                 music.queue(game_soundtrack.path, self.channel, loop=True)
 
     def periodic(self, st):
-
         pos, duration = self.get_pos_duration()
         loopThis, doRandom = self.get_song_options_status()
+
         if pos and pos <= duration:
             self.adjustment.set_range(duration)
             self.adjustment.change(pos)
@@ -281,10 +280,7 @@ def rpa_mapping_detection(style_name, st, at):
         renpy.exports.file("RPASongMetadata.json")
         return Text("", size=23), 0.0
     except:
-        return Text("{b}Warning:{/b} The RPA metadata file hasn't been "
-        "generated. Songs in the {i}track{/i} folder that are archived into a "
-        "RPA won't work without it. Set {i}config.developer{/i} to {i}True{/i} "
-        "in order to generate this file.", style=style_name, size=20), 0.0
+        return Text("{b}Warning:{/b} The RPA metadata file hasn't been generated. Songs in the {i}track{/i} folder that are archived into a RPA won't work without it. Set {i}config.developer{/i} to {i}True{/i} in order to generate this file.", style=style_name, size=20), 0.0
 
 def convert_time(x):
     '''
@@ -319,7 +315,10 @@ def current_music_pause():
     global game_soundtrack_pause, pausedstate
     pausedstate = True
 
-    soundtrack_position = music.get_pos(channel = 'music_room') + 1.6
+    if not music.is_playing(channel='music_room'):
+        return
+    else:
+        soundtrack_position = music.get_pos(channel = 'music_room') + 1.6
 
     if soundtrack_position is not None:
         game_soundtrack_pause = ("<from " + str(soundtrack_position) + ">" 
@@ -393,17 +392,17 @@ def next_track(back=False):
 
     global game_soundtrack
 
-    for st in range(len(soundtracks)):
-        if (game_soundtrack.description == soundtracks[st].description 
-            and game_soundtrack.name == soundtracks[st].name):
+    for index, item in enumerate(soundtracks):
+        if (game_soundtrack.description == item.description 
+            and game_soundtrack.name == item.name):
             try:
                 if back:
-                    game_soundtrack = soundtracks[st-1]
+                    game_soundtrack = soundtracks[index-1]
                 else:
-                    game_soundtrack = soundtracks[st+1]
+                    game_soundtrack = soundtracks[index+1]
             except:
                 if back:
-                    game_soundtrack = soundtracks[len(soundtracks)-1]
+                    game_soundtrack = soundtracks[-1]
                 else:
                     game_soundtrack = soundtracks[0]
             break
@@ -486,7 +485,7 @@ def get_info(path, tags):
     try:
         image_data = tags.get_image()
         
-        with open(gamedir + "/python-packages/binaries.txt", "rb") as a:
+        with open(os.path.join(gamedir, "python-packages/binaries.txt"), "rb") as a:
             lines = a.readlines()
 
         jpgbytes = bytes("\\xff\\xd8\\xff")
@@ -505,8 +504,7 @@ def get_info(path, tags):
 
         coverAlbum = re.sub(r"\[|\]|/|:|\?",'', tags.album)
                 
-        with open(gamedir + '/track/covers/' + coverAlbum + cover_formats, 
-                'wb') as f:
+        with open(os.path.join(gamedir, 'track/covers', coverAlbum + cover_formats), 'wb') as f:
             f.write(image_data)
 
         art = coverAlbum + cover_formats
@@ -570,7 +568,7 @@ def def_song(title, artist, path, priority, sec, altAlbum, album, comment,
         author = artist,
         path = path,
         byteTime = sec,
-        priority = priorityScan,
+        priority = priority,
         description = description,
         cover_art = altAlbum,
         unlocked = unlocked
@@ -583,7 +581,7 @@ def rpa_mapping():
     '''
 
     data = []
-    try: os.remove(gamedir + "/RPASongMetadata.json")
+    try: os.remove(os.path.join(gamedir, "RPASongMetadata.json"))
     except: pass
     for y in autoDefineList:
         data.append ({

@@ -122,14 +122,17 @@ screen music_room():
             vbox:
                 hbox: 
                     vbox:
+                        style_prefix "music_room_information_vbox"
                         add "titleName"
                 hbox:
                     vbox:
+                        style_prefix "music_room_information_vbox"
                         add "authorName"
 
                 if ost.game_soundtrack.description:
                     hbox:
                         vbox:
+                            style_prefix "music_room_information_vbox"
                             add "songDescription"
 
         hbox:
@@ -258,8 +261,6 @@ style music_room_information_text:
     font gui.interface_text_font
     xpos gui.music_room_information_xpos
     ypos gui.music_room_information_ypos
-    xsize gui.music_room_information_xsize
-    xfill True
 
 style music_room_control_options:
     xpos gui.music_room_options_xpos
@@ -291,6 +292,10 @@ style music_room_progress_text:
 
 style music_room_duration_text is music_room_progress_text:
     xpos gui.music_room_duration_text_xpos 
+
+style music_room_information_vbox:
+    xsize gui.music_room_information_xsize
+    xfill True
 
 transform cover_art_fade:
     anchor (0.5, 0.5)
