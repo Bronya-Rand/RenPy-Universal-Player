@@ -18,23 +18,26 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Pardon any mess within this PY file. Finally PEP8'd it.
+# The main code behind the music room. Pardon any mess within this PY file.
 
 import random
 import re
 import os
 import json
+import logging
 import renpy
 import pygame_sdl2
 from tinytag import TinyTag
+from minimalRPATool import RenPyArchive
 from renpy.text.text import Text
 from renpy.display.im import image
 import renpy.audio.music as music
 import renpy.display.behavior as displayBehavior
 
 # Creation of Music Room and Code Setup
-version = 1.6
+version = 1.7
 music.register_channel("music_room", mixer="music_room_mixer", loop=False)
+
 if renpy.windows:
     gamedir = renpy.config.gamedir.replace("\\", "/")
 elif renpy.android:
@@ -44,6 +47,12 @@ elif renpy.android:
 else:
     gamedir = renpy.config.gamedir
 
+if renpy.android:
+    logdir = os.path.join(os.environ["ANDROID_PUBLIC"], "ost_log.txt")
+else:
+    logdir = os.path.join(renpy.config.basedir, "ost_log.txt")
+if os.path.exists(logdir):
+    os.remove(logdir)
 
 # Lists for holding media types
 autoDefineList = []
@@ -83,7 +92,10 @@ class soundtrack:
         self.path = path
         self.priority = priority
         self.author = author
-        self.byteTime = byteTime
+        if byteTime:
+            self.byteTime = byteTime
+        else:
+            self.byteTime = get_duration(path)
         self.description = description
         if not cover_art:
             self.cover_art = "images/music_room/nocover.png"
@@ -118,7 +130,7 @@ class AdjustableAudioPositionValue(renpy.ui.BarValue):
     def get_adjustment(self):
         pos, duration = self.get_pos_duration()
         self.adjustment = renpy.ui.adjustment(value=pos, range=duration, 
-                                            changed=self.set_pos, adjustable=True)
+                            changed=self.set_pos, adjustable=True)
 
         return self.adjustment
 
@@ -132,7 +144,7 @@ class AdjustableAudioPositionValue(renpy.ui.BarValue):
         loopThis = self.get_song_options_status()
         if (self._hovered and pygame_sdl2.mouse.get_pressed()[0]):
             music.play("<from {}>".format(value) + game_soundtrack.path, 
-                    self.channel)
+                self.channel)
             if loopThis:
                 music.queue(game_soundtrack.path, self.channel, loop=True)
 
@@ -173,6 +185,27 @@ def music_pos(style_name, st, at):
     d = Text(readableTime, style=style_name) 
     return d, 0.20
 
+def get_duration(songPath=None):
+    if game_soundtrack and game_soundtrack.byteTime and not songPath:
+        return game_soundtrack.byteTime
+    else:
+        try:
+            if songPath:
+                pathToSong = songPath
+            else:
+                pathToSong = game_soundtrack.path
+
+            tags = TinyTag.get_renpy(pathToSong, image=False)
+                    
+            if tags.duration:
+                return tags.duration
+            else:
+                if not songPath:
+                    return music.get_duration(channel='music_room') or time_duration 
+        except:
+            if not songPath:
+                return music.get_duration(channel='music_room') or time_duration
+
 def music_dur(style_name, st, at):
     '''
     Returns the track duration to Ren'Py.
@@ -180,11 +213,7 @@ def music_dur(style_name, st, at):
 
     global time_duration
 
-    if game_soundtrack.byteTime:
-        time_duration = game_soundtrack.byteTime
-    else:
-        time_duration = music.get_duration(
-                                        channel='music_room') or time_duration
+    time_duration = get_duration()
 
     readableDuration = convert_time(time_duration)
     d = Text(readableDuration, style=style_name)     
@@ -261,26 +290,14 @@ def auto_play_pause_button(st, at):
 
     if music.is_playing(channel='music_room'):
         if pausedstate:
-            d = renpy.display.behavior.ImageButton("images/music_room/pause.png")
+            d = displayBehavior.ImageButton("images/music_room/pause.png")
         else:
-            d = renpy.display.behavior.ImageButton("images/music_room/pause.png", 
-                                                action=current_music_pause)
+            d = displayBehavior.ImageButton("images/music_room/pause.png", 
+                    action=current_music_pause)
     else:
         d = displayBehavior.ImageButton("images/music_room/play.png", 
-                                        action=current_music_play)
+                    action=current_music_play)
     return d, 0.20
-
-def rpa_mapping_detection(style_name, st, at):
-    '''
-    Returns a warning message to the player if it can't find the RPA cache
-    JSON file in the game folder.
-    '''
-
-    try: 
-        renpy.exports.file("RPASongMetadata.json")
-        return Text("", size=23), 0.0
-    except:
-        return Text("{b}Warning:{/b} The RPA metadata file hasn't been generated. Songs in the {i}track{/i} folder that are archived into a RPA won't work without it. Set {i}config.developer{/i} to {i}True{/i} in order to generate this file.", style=style_name, size=20), 0.0
 
 def convert_time(x):
     '''
@@ -437,6 +454,7 @@ def mute_player():
 
     global old_volume
 
+    logging.info("Muting the audio player.")
     if renpy.game.preferences.get_volume("music_room_mixer") != 0.0:
         old_volume = renpy.game.preferences.get_volume("music_room_mixer")
         renpy.game.preferences.set_volume("music_room_mixer", 0.0)
@@ -451,9 +469,8 @@ def refresh_list():
     Refreshes the song list.
     '''
 
+    logging.info("Refreshing the music player list.")
     scan_song() 
-    if renpy.config.developer or renpy.config.developer == "auto":
-        rpa_mapping()
     resort()
 
 def resort():
@@ -462,21 +479,26 @@ def resort():
     '''
 
     global soundtracks
+    logging.info("Resorting requested. Sorting the music player list.")
     soundtracks = []
 
     for obj in autoDefineList:
         if obj.unlocked:
             soundtracks.append(obj)
+    logging.info("Added auto-defined songs to the music list.")
     for obj in manualDefineList:
         if obj.unlocked:
             soundtracks.append(obj)
+    logging.info("Added manual-defined songs to the music list.")
 
     if organizeAZ:
         soundtracks = sorted(soundtracks, key=lambda soundtracks: 
                             soundtracks.name)
+        logging.info("Sorted list by alphabetical order.")
     if organizePriority:
         soundtracks = sorted(soundtracks, key=lambda soundtracks: 
                             soundtracks.priority)
+        logging.info("Sorted list by priority values.")
 
 def get_info(path, tags):   
     '''
@@ -487,7 +509,7 @@ def get_info(path, tags):
     try:
         image_data = tags.get_image()
         
-        with open(os.path.join(gamedir, "python-packages/binaries.txt"), "rb") as a:
+        with renpy.exports.file("python-packages/binaries.txt") as a:
             lines = a.readlines()
 
         jpgbytes = bytes("\\xff\\xd8\\xff")
@@ -502,6 +524,7 @@ def get_info(path, tags):
             cover_formats=".png"
 
             if utfmatch: # addresses itunes cover descriptor fixes
+                logging.warning("Improper PNG data was found. Repairing cover art.")
                 image_data = re.sub(utfbytes, lines[2], image_data)
 
         coverAlbum = re.sub(r"\[|\]|/|:|\?",'', tags.album)
@@ -509,9 +532,12 @@ def get_info(path, tags):
         with open(os.path.join(gamedir, 'track/covers', coverAlbum + cover_formats), 'wb') as f:
             f.write(image_data)
 
-        art = coverAlbum + cover_formats
+        art = "track/covers/" + coverAlbum + cover_formats
+        logging.info("Obtained metadata info for " + path + ".")
         return tags.title, tags.artist, sec, art, tags.album, tags.comment
     except TypeError:
+        logging.warning("Cover art could not be obtained/written to the \"covers\" directory.")
+        logging.info("Obtained metadata info for " + path + ".")
         return tags.title, tags.artist, sec, None, tags.album, tags.comment
 
 def scan_song():
@@ -521,21 +547,51 @@ def scan_song():
 
     global autoDefineList
 
+    logging.info("Scanning music directories.")
     exists = []
+    logging.info("Checking for removed songs.")
     for x in autoDefineList[:]:
         try:
             renpy.exports.file(x.path)
             exists.append(x.path)    
         except:
+            logging.info("Removed " + x.path + " from the music player list.")
             autoDefineList.remove(x)
-        
+    
+    logging.info("Scanning the \"track\" folder for music.")
     for x in os.listdir(gamedir + '/track'):
         if x.endswith((file_types)) and "track/" + x not in exists:
             path = "track/" + x
+            logging.info("Obtaining metadata info for " + path + ".")
             tags = TinyTag.get(gamedir + "/" + path, image=True) 
             title, artist, sec, altAlbum, album, comment = get_info(path, tags)
             def_song(title, artist, path, priorityScan, sec, altAlbum, album,
                     comment, True)
+            exists.append(path)
+    
+    logging.info("Scanning Ren'Py files for music stored in the archived \"track\" folder.")
+    rpa_list = [x + ".rpa" for x in renpy.config.archives]
+    rpa_file_list = []
+    
+    if renpy.android:
+        logging.info("Android platform was detected. Scanning music via \"renpy.list_files()\".")
+        rpa_file_list = [x for x in renpy.list_files() if "track/" in x and x.endswith((file_types))]
+    else:
+        logging.info("Scanning Ren'Py archive files for music using \"minimalRPATool\".")
+        for archive in rpa_list:
+            rpa_file = RenPyArchive(os.path.join(gamedir, archive), padlength=0, key=0xDEADBEEF, version=3)
+            rpa_file_list += [x for x in rpa_file.list() if "track/" in x and x.endswith((file_types))]
+    
+    for x in rpa_file_list:
+        if x not in exists:
+            logging.info("Obtaining metadata info for " + x + ".")
+            if renpy.android:
+                tags = TinyTag.get_renpy(x, image=True, apk=True) 
+            else:
+                tags = TinyTag.get_renpy(x, image=True) 
+            title, artist, sec, altAlbum, album, comment = get_info(x, tags)
+            def_song(title, artist, x, priorityScan, sec, altAlbum, album, 
+                comment, True)
 
 def def_song(title, artist, path, priority, sec, altAlbum, album, comment,
             unlocked=True):
@@ -543,26 +599,33 @@ def def_song(title, artist, path, priority, sec, altAlbum, album, comment,
     Defines the song to the music player list.
     '''
 
-    if title is None:
+    logging.info("Defining song located in " + path + " to the music player.")
+    if not title:
+        logging.warning("No song title was defined. Defaulting to \"path\".")
         title = str(path.replace("track/", "")).capitalize()
-    if artist is None or artist == "":
+    if not artist:
+        logging.warning("No artist was defined. Defaulting to \"Unknown Artist\".")
         artist = "Unknown Artist"
-    if altAlbum is None or altAlbum == "":
+    if not altAlbum:
+        logging.warning("No album cover was defined. Defaulting to \"nocover.png\".")
         altAlbum = "images/music_room/nocover.png" 
     else:
-        altAlbum = "track/covers/"+altAlbum
         try:
+            logging.info("Album cover was defined. Checking if it's loadable.")
             renpy.exports.image_size(altAlbum)
+            logging.info("Album cover is loadable. Defaulting cover to given path.")
         except:
+            logging.warning("Album cover cannot be loaded. Defaulting to \"nocover.png\".")
             altAlbum = "images/music_room/nocover.png" 
-    if album is None or album == "":
+    if not album:
+        logging.warning("No album name was defined. Defaulting to \"Non-Metadata Song\".")
         description = "Non-Metadata Song"
     else:
-        if comment is None: 
-            description = album 
-        else:
-            description = album + '\n' + comment 
+        description = album 
+    if comment: 
+        description += '\n' + comment 
 
+    logging.info("Metadata info has been defined. Adding to \"autoDefineList\".")
     class_name = re.sub(r"-|'| ", "_", title)
 
     class_name = soundtrack(
@@ -577,60 +640,6 @@ def def_song(title, artist, path, priority, sec, altAlbum, album, comment,
     )
     autoDefineList.append(class_name)
 
-def rpa_mapping():
-    '''
-    Maps songs in the track folder to a JSON for APK/RPA packing.
-    '''
-
-    data = []
-    try: os.remove(os.path.join(gamedir, "RPASongMetadata.json"))
-    except: pass
-    for y in autoDefineList:
-        data.append ({
-            "class": re.sub(r"-|'| ", "_", y.name),
-            "title": y.name,
-            "artist": y.author,
-            "path": y.path,
-            "sec": y.byteTime,
-            "altAlbum": y.cover_art,
-            "description": y.description,
-            "unlocked": y.unlocked,
-        })
-    with open(gamedir + "/RPASongMetadata.json", "a") as f:
-        json.dump(data, f)
-
-def rpa_load_mapping():
-    '''
-    Loads the JSON mapping and defines it to the player.
-    '''
-
-    try: renpy.exports.file("RPASongMetadata.json")
-    except: return
-
-    with renpy.exports.file("RPASongMetadata.json") as f:
-        data = json.load(f)
-
-    for p in data:
-        title, artist, path, sec, altAlbum, description, unlocked = (p['title'], 
-                                                                    p['artist'], 
-                                                                    p["path"], 
-                                                                    p["sec"], 
-                                                                    p["altAlbum"], 
-                                                                    p["description"], 
-                                                                    p["unlocked"])
-
-        p['class'] = soundtrack(
-            name = title,
-            author = artist,
-            path = path,
-            byteTime = sec,
-            priority = priorityScan,
-            description = description,
-            cover_art = altAlbum,
-            unlocked = unlocked
-        )
-        autoDefineList.append(p['class'])
-
 def get_music_channel_info():
     '''
     Gets the info of the music channel for exiting purposes.
@@ -638,8 +647,11 @@ def get_music_channel_info():
 
     global prevTrack
 
+    logging.info("Getting music playing from music channel.")
     prevTrack = music.get_playing(channel='music')
+    logging.info("Obtained music status from \"renpy.audio.music\".")
     if prevTrack is None:
+        logging.warning("No music was found via \"renpy.audio.music\".")
         prevTrack = False
 
 def check_paused_state():
@@ -647,22 +659,44 @@ def check_paused_state():
     Checks if the music player is in a paused state for exiting purposes.
     '''
 
+    logging.info("Checking if a music session exists or if we are in a paused state.")
     if not game_soundtrack or pausedstate:
+        logging.info("No music session found or we are currently in a paused state. " 
+            "Exiting check state.")
         return
     else:
+        logging.info("A music session was found or we are currently not in a paused state. "
+            "Stopping music session and exiting check state.")
         current_music_pause()
 
-try: os.mkdir(gamedir + "/track")
-except: pass
-try: os.mkdir(gamedir + "/track/covers")
+def ost_log_start():
+    logging.basicConfig(filename=logdir, level=logging.DEBUG)
+    logging.info("Started logging this UOST-Player session for errors.")
+
+def ost_log_stop():
+    logging.info("Stopped logging this UOST-Player session for errors.")
+    logging.shutdown()
+
+def ost_start():
+    get_music_channel_info()
+    resort()
+
+def ost_quit():
+    check_paused_state()
+    ost_log_stop()
+
+    ost_log_start()
+
+logging.info("Making the \"track\" folder in " + gamedir + " if it's not present.")
+try: os.mkdir(os.path.join(gamedir, "track"))
 except: pass
 
-for x in os.listdir(gamedir + '/track/covers'):
-    os.remove(gamedir + '/track/covers/' + x)
+logging.info("Making the \"covers\" folder in " + gamedir + "/track if it's not present.")
+try: os.mkdir(os.path.join(gamedir, "track", "covers"))
+except: pass
+
+logging.info("Clearing the covers folder of cover art.")
+for x in os.listdir(os.path.join(gamedir, "track", "covers")):
+    os.remove(os.path.join(gamedir, "track", "covers", x))
 
 scan_song()
-if renpy.config.developer or renpy.config.developer == "auto":
-    rpa_mapping()
-else:
-    rpa_load_mapping()
-resort()

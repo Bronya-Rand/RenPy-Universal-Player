@@ -9,6 +9,7 @@
 
 # MIT License
 
+# Copyright (C) 2021 GanstaKingofSA (Hanaka)
 # Copyright (c) 2014-2019 Tom Wallroth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -42,6 +43,8 @@ import io
 import sys
 from io import BytesIO
 import re
+import renpy
+import ost_backend
 
 DEBUG = os.environ.get('DEBUG', False)  # some of the parsers can print debug info
 
@@ -135,6 +138,7 @@ class TinyTag(object):
             b'^fLaC': Flac,
             b'^\x30\x26\xB2\x75\x8E\x66\xCF\x11\xA6\xD9\x00\xAA\x00\x62\xCE\x6C': Wma,
             b'....ftypM4A': MP4,  # https://www.file-recovery.com/m4a-signature-format.htm
+            b'\xff\xf1': MP4,  # https://www.garykessler.net/library/file_sigs.html
         }
         header = fh.peek(max(len(sig) for sig in magic_bytes_mapping))
         for magic, parser in magic_bytes_mapping.items():
@@ -173,6 +177,32 @@ class TinyTag(object):
             tag.load(tags=tags, duration=duration, image=image)
             return tag
 
+    @classmethod
+    def get_renpy(cls, filename, tags=True, duration=True, image=False, apk=False, ignore_errors=False):
+        import ost_apk
+        ## TODO: Make path obtain/data
+        if renpy.android and apk:
+            mod_apk = ost_apk.AltAPK(prefix="assets/x-game")
+            split_filename = filename.split("/")
+            new_filename = ""
+            for x in split_filename:
+                new_filename += "/x-" + x 
+
+            with mod_apk.open(new_filename) as af:
+                full_path = os.path.join(os.path.realpath(af.name), "assets/x-game", new_filename)
+                parser_class = cls.get_parser_class(full_path, af)
+                tag = parser_class(af, 1, ignore_errors=ignore_errors) #1 because RPAs can't fetch filesize
+                tag.load(tags=tags, duration=duration, image=image)
+        else:
+            full_path = os.path.join(renpy.config.gamedir, filename).replace("\\", "/")
+            
+            with ost_backend.file(filename) as af:
+                parser_class = cls.get_parser_class(full_path, af)
+                tag = parser_class(af, 1, ignore_errors=ignore_errors) #1 because RPAs can't fetch filesize
+                tag.load(tags=tags, duration=duration, image=image)
+                
+        return tag
+
     def __str__(self):
         return json.dumps(OrderedDict(sorted(self.as_dict().items())))
 
@@ -188,12 +218,19 @@ class TinyTag(object):
                 self._filehandler.seek(0)
             self._determine_duration(self._filehandler)
 
-    def _set_field(self, fieldname, bytestring, transfunc=None):
+    def _set_field(self, fieldname, bytestring, transfunc=None, id3key=None):
         """convienience function to set fields of the tinytag by name.
         the payload (bytestring) can be changed using the transfunc"""
         if getattr(self, fieldname):  # do not overwrite existing data
             return
-        value = bytestring if transfunc is None else transfunc(bytestring)
+
+        if not transfunc:
+            value = bytestring  
+        elif not id3key:
+            value = transfunc(bytestring) 
+        else: 
+            value = transfunc(bytestring, id3key)
+
         if DEBUG:
             stderr('Setting field "%s" to "%s"' % (fieldname, value))
         if fieldname == 'genre':
@@ -211,8 +248,12 @@ class TinyTag(object):
                 current, total = value.split('/')[:2]
                 setattr(self, "%s_total" % fieldname, total)
             else:
-                current = value
+                # Converting 'track', 'disk' to string for type consistency.
+                current = str(value) if isinstance(value, int) else value
             setattr(self, fieldname, current)
+        elif fieldname in ("track_total", "disc_total") and isinstance(value, int):
+            # Converting to string 'track_total', 'disc_total' for type consistency.
+            setattr(self, fieldname, str(value))
         else:
             setattr(self, fieldname, value)
 
@@ -223,7 +264,7 @@ class TinyTag(object):
         raise NotImplementedError()
 
     def update(self, other):
-        # update the values of this tag with the values from another tag
+        # update the values of this tag with the values from another ftag
         for key in ['track', 'track_total', 'title', 'artist',
                     'album', 'albumartist', 'year', 'duration',
                     'genre', 'disc', 'disc_total', 'comment', 'composer']:
@@ -231,9 +272,24 @@ class TinyTag(object):
                 setattr(self, key, getattr(other, key))
 
     @staticmethod
-    def _unpad(s):
-        # strings in mp3 and asf *may* be terminated with a zero byte at the end
-        return s.replace('\x00', '')
+    def _unpad(s, id3key=None):
+        # if end of line has \x00 pattern, axe it
+        try:
+            if s[-1] == "\x00":
+                t = s.replace(s[-1], "")
+            else:
+                t = s
+        except IndexError:
+            t = s
+        # if s is a artist string
+        if id3key in ("TPE1", "TPE2"):
+            return t.replace("\x00", "/")
+        # if s is a genre string
+        elif id3key == "TCON":
+            return t.replace("\x00", "/")
+        else:
+            # strings in mp3 and asf *may* be terminated with a zero byte at the end
+            return t.replace('\x00', '')
 
 
 class MP4(TinyTag):
@@ -688,7 +744,7 @@ class ID3(TinyTag):
             content = fh.read(frame_size)
             fieldname = ID3.FRAME_ID_TO_FIELD.get(frame_id)
             if fieldname:
-                self._set_field(fieldname, content, self._decode_string)
+                self._set_field(fieldname, content, self._decode_string, frame_id)
             elif frame_id in self.IMAGE_FRAME_IDS and self._load_image:
                 # See section 4.14: http://id3.org/id3v2.4.0-frames
                 if frame_id == 'PIC':  # ID3 v2.2:
@@ -703,7 +759,7 @@ class ID3(TinyTag):
             return frame_size
         return 0
 
-    def _decode_string(self, bytestr):
+    def _decode_string(self, bytestr, id3key=None):
         try:  # it's not my fault, this is the spec.
             first_byte = bytestr[:1]
             if first_byte == b'\x00':  # ISO-8859-1
@@ -739,7 +795,7 @@ class ID3(TinyTag):
             if bytestr[:4] == b'eng\x00':
                 bytestr = bytestr[4:]  # remove language
             errors = 'ignore' if self._ignore_errors else 'strict'
-            return self._unpad(codecs.decode(bytestr, encoding, errors))
+            return self._unpad(codecs.decode(bytestr, encoding, errors), id3key)
         except UnicodeDecodeError:
             raise TinyTagException('Error decoding ID3 Tag!')
 
@@ -1040,6 +1096,9 @@ class Wma(TinyTag):
 
     def __decode_string(self, bytestring):
         return self._unpad(codecs.decode(bytestring, 'utf-16'))
+
+    def __decode_alt_string(self, bytestring):
+        return self._unpad(codecs.decode(bytestring, 'utf-8'))
 
     def __decode_ext_desc(self, value_type, value):
         """ decode ASF_EXTENDED_CONTENT_DESCRIPTION_OBJECT values"""
