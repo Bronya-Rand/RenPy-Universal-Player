@@ -1,4 +1,3 @@
-
 # Copyright (C) 2021 GanstaKingofSA (Hanaka)
 # Copyright (C) 2019 Shizmob (Shiz)
 
@@ -19,6 +18,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
+# Highly minimal RPATool for RPA reading.
 
 import pickle
 import codecs
