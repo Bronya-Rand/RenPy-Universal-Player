@@ -26,8 +26,8 @@ import renpy
 import re
 import io
 
-class AltSubFile(object):
 
+class AltSubFile(object):
     def __init__(self, fn, base, length, start=None):
         self.fn = fn
 
@@ -66,7 +66,7 @@ class AltSubFile(object):
         else:
             length = maxlength
 
-        rv1 = self.start[self.offset:self.offset + length]
+        rv1 = self.start[self.offset : self.offset + length]
         length -= len(rv1)
         self.offset += len(rv1)
 
@@ -76,7 +76,7 @@ class AltSubFile(object):
         else:
             rv2 = ""
 
-        return (rv1 + rv2)
+        return rv1 + rv2
 
     def readline(self, length=None):
 
@@ -91,12 +91,12 @@ class AltSubFile(object):
 
         # If we're in the start, then read the line ourselves.
         if self.offset < len(self.start):
-            rv = ''
+            rv = ""
 
             while length:
                 c = self.read(1)
                 rv += c
-                if c == '\n':
+                if c == "\n":
                     break
                 length -= 1
 
@@ -110,7 +110,7 @@ class AltSubFile(object):
         return rv
 
     def readlines(self, length=None):
-        rv = [ ]
+        rv = []
 
         while True:
             l = self.readline(length)
@@ -133,7 +133,7 @@ class AltSubFile(object):
     def __iter__(self):
         return self
 
-    def __next__(self): # @ReservedAssignment
+    def __next__(self):  # @ReservedAssignment
         rv = self.readline()
 
         if not rv:
@@ -185,6 +185,7 @@ class AltSubFile(object):
     def write(self, s):
         raise Exception("Write not supported by SubFile/AltSubFile")
 
+
 def load_from_archive(name):
     """
     Returns an open python file object of the given type from an archive file.
@@ -196,7 +197,7 @@ def load_from_archive(name):
 
         afn = renpy.loader.transfn(prefix)
 
-        data = [ ]
+        data = []
 
         # Direct path.
         if len(index[name]) == 1:
@@ -204,7 +205,7 @@ def load_from_archive(name):
             t = index[name][0]
             if len(t) == 2:
                 offset, dlen = t
-                start = b''
+                start = b""
             else:
                 offset, dlen, start = t
 
@@ -217,31 +218,37 @@ def load_from_archive(name):
                     f.seek(offset)
                     data.append(f.read(dlen))
 
-                rv = io.BytesIO(b''.join(data))
+                rv = io.BytesIO(b"".join(data))
 
         return rv
 
     return None
 
+
 if renpy.version_tuple > (6, 99, 12, 4, 2187):
     renpy.loader.file_open_callbacks.remove(renpy.loader.load_from_archive)
     renpy.loader.file_open_callbacks.append(load_from_archive)
+
 
 def load(name, tl=True):
 
     if renpy.version_tuple > (6, 99, 12, 4, 2187):
         gp = renpy.loader.get_prefixes(tl)
-        if renpy.display.predict.predicting: # @UndefinedVariable
+        if renpy.display.predict.predicting:  # @UndefinedVariable
             if threading.current_thread().name == "MainThread":
-                if not (renpy.emscripten or os.environ.get('RENPY_SIMULATE_DOWNLOAD', False)):
-                    raise Exception("Refusing to open {} while predicting.".format(name))
+                if not (
+                    renpy.emscripten or os.environ.get("RENPY_SIMULATE_DOWNLOAD", False)
+                ):
+                    raise Exception(
+                        "Refusing to open {} while predicting.".format(name)
+                    )
     else:
         gp = renpy.loader.get_prefixes()
-        
+
     if renpy.config.reject_backslash and "\\" in name:
         raise Exception("Backslash in filename, use '/' instead: %r" % name)
 
-    name = re.sub(r'/+', '/', name).lstrip('/')
+    name = re.sub(r"/+", "/", name).lstrip("/")
 
     for p in gp:
         rv = renpy.loader.load_core(p + name)

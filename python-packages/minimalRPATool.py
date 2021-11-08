@@ -26,6 +26,7 @@ import codecs
 import sys
 
 if sys.version_info[0] >= 3:
+
     def _unicode(text):
         return text
 
@@ -33,19 +34,22 @@ if sys.version_info[0] >= 3:
         return text
 
     def _unmangle(data):
-        return data.encode('latin1')
+        return data.encode("latin1")
 
     def _unpickle(data):
         # Specify latin1 encoding to prevent raw byte values from causing an ASCII decode error.
-        return pickle.loads(data, encoding='latin1')
+        return pickle.loads(data, encoding="latin1")
+
+
 elif sys.version_info[0] == 2:
+
     def _unicode(text):
         if isinstance(text, unicode):
             return text
-        return text.decode('utf-8')
+        return text.decode("utf-8")
 
     def _printable(text):
-        return text.encode('utf-8')
+        return text.encode("utf-8")
 
     def _unmangle(data):
         return data
@@ -53,7 +57,8 @@ elif sys.version_info[0] == 2:
     def _unpickle(data):
         return pickle.loads(data)
 
-class RenPyArchive():
+
+class RenPyArchive:
 
     file = None
     handle = None
@@ -66,14 +71,16 @@ class RenPyArchive():
     key = None
     verbose = False
 
-    RPA2_MAGIC = 'RPA-2.0 '
-    RPA3_MAGIC = 'RPA-3.0 '
-    RPA3_2_MAGIC = 'RPA-3.2 '
+    RPA2_MAGIC = "RPA-2.0 "
+    RPA3_MAGIC = "RPA-3.0 "
+    RPA3_2_MAGIC = "RPA-3.2 "
 
     # For backward compatibility, otherwise Python3-packed archives won't be read by Python2
     PICKLE_PROTOCOL = 2
 
-    def __init__(self, file = None, version = 3, padlength = 0, key = 0xDEADBEEF, verbose = False):
+    def __init__(
+        self, file=None, version=3, padlength=0, key=0xDEADBEEF, verbose=False
+    ):
         self.padlength = padlength
         self.key = key
         self.verbose = verbose
@@ -89,7 +96,7 @@ class RenPyArchive():
 
     def get_version(self):
         self.handle.seek(0)
-        magic = self.handle.readline().decode('utf-8')
+        magic = self.handle.readline().decode("utf-8")
 
         if magic.startswith(self.RPA3_2_MAGIC):
             return 3.2
@@ -97,10 +104,12 @@ class RenPyArchive():
             return 3
         elif magic.startswith(self.RPA2_MAGIC):
             return 2
-        elif self.file.endswith('.rpi'):
+        elif self.file.endswith(".rpi"):
             return 1
 
-        raise ValueError('the given file is not a valid Ren\'Py archive, or an unsupported version')
+        raise ValueError(
+            "the given file is not a valid Ren'Py archive, or an unsupported version"
+        )
 
     # Load archive.
     def load(self, filename):
@@ -110,7 +119,7 @@ class RenPyArchive():
             self.handle.close()
         self.file = filename
         self.files = {}
-        self.handle = open(self.file, 'rb')
+        self.handle = open(self.file, "rb")
         self.version = self.get_version()
         self.indexes = self.extract_indexes()
 
@@ -134,7 +143,7 @@ class RenPyArchive():
 
             # Load in indexes.
             self.handle.seek(offset)
-            contents = codecs.decode(self.handle.read(), 'zlib')
+            contents = codecs.decode(self.handle.read(), "zlib")
             indexes = _unpickle(contents)
 
             # Deobfuscate indexes.
@@ -143,14 +152,20 @@ class RenPyArchive():
                 indexes = {}
                 for i in obfuscated_indexes.keys():
                     if len(obfuscated_indexes[i][0]) == 2:
-                        indexes[i] = [ (offset ^ self.key, length ^ self.key) for offset, length in obfuscated_indexes[i] ]
+                        indexes[i] = [
+                            (offset ^ self.key, length ^ self.key)
+                            for offset, length in obfuscated_indexes[i]
+                        ]
                     else:
-                        indexes[i] = [ (offset ^ self.key, length ^ self.key, prefix) for offset, length, prefix in obfuscated_indexes[i] ]
+                        indexes[i] = [
+                            (offset ^ self.key, length ^ self.key, prefix)
+                            for offset, length, prefix in obfuscated_indexes[i]
+                        ]
         else:
-            indexes = pickle.loads(codecs.decode(self.handle.read(), 'zlib'))
+            indexes = pickle.loads(codecs.decode(self.handle.read(), "zlib"))
 
         return indexes
 
-# List files in archive and current internal storage.
+    # List files in archive and current internal storage.
     def list(self):
         return list(self.indexes.keys()) + list(self.files.keys())
