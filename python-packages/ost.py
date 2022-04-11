@@ -32,8 +32,7 @@ from renpy.text.text import Text
 from renpy.display.im import image
 import renpy.audio.music as music
 import renpy.display.behavior as displayBehavior
-import renpy.random as rendom  # Ren'Py Random
-import renpy.game.preferences as gamePreference
+import random
 
 # Creation of Music Room and Code Setup
 version = 2.0
@@ -57,7 +56,7 @@ else:
 
 # Lists for holding media types
 soundtracks = []
-rendom.Random()
+random.Random()
 
 
 class OSTPlayerInfo:
@@ -163,7 +162,7 @@ class OSTPlayerInfo:
     def music_pos(self, style_name, st, at):
         readableTime = self.convert_time(self.get_pos())
 
-        if persistent.listui:
+        if renpy.store.persistent.listui:
             return Text(readableTime, style=style_name, substitute=False, size=16), 0.20
         else:
             return Text(readableTime, style=style_name), 0.20
@@ -171,7 +170,7 @@ class OSTPlayerInfo:
     def music_dur(self, style_name, st, at):
         readableDuration = self.convert_time(self.get_duration())
 
-        if persistent.listui:
+        if renpy.store.persistent.listui:
             return (
                 Text(readableDuration, style=style_name, substitute=False, size=16),
                 0.20,
@@ -182,7 +181,7 @@ class OSTPlayerInfo:
     def dynamic_title_text(self, style_name, st, at):
         title = self.get_title()
 
-        if persistent.listui:
+        if renpy.store.persistent.listui:
             return Text(title, style=style_name, substitute=False, size=20), 0.20
 
         if len(title) <= 21:
@@ -197,7 +196,7 @@ class OSTPlayerInfo:
     def dynamic_author_text(self, style_name, st, at):
         author = self.get_artist()
 
-        if persistent.listui:
+        if renpy.store.persistent.listui:
             return Text(author, style=style_name, substitute=False, size=20), 0.20
 
         if len(author) <= 32:
@@ -218,7 +217,7 @@ class OSTPlayerInfo:
     def dynamic_album_text(self, style_name, st, at):
         album = self.get_album()
 
-        if persistent.listui:
+        if renpy.store.persistent.listui:
             return Text(album, style=style_name, substitute=False, size=20), 0.20
 
         if len(album) <= 32:
@@ -344,7 +343,7 @@ class OSTPlayerControls:
     def random_track(self):
         unique = 1
         while unique != 0:
-            a = rendom.randint(0, len(soundtracks))
+            a = random.randint(0, len(soundtracks))
             if ost_info.current_soundtrack != soundtracks[a]:
                 unique = 0
                 ost_info.current_soundtrack = soundtracks[a]
@@ -359,14 +358,14 @@ class OSTPlayerControls:
     def mute_player(self):
         logging.info("Muting the audio player.")
 
-        if gamePreference.get_volume("music_room_mixer") != 0.0:
-            self.oldVolume = gamePreference.get_volume("music_room_mixer")
-            gamePreference.set_volume("music_room_mixer", 0.0)
+        if renpy.game.preferences.get_volume("music_room_mixer") != 0.0:
+            self.oldVolume = renpy.game.preferences.get_volume("music_room_mixer")
+            renpy.game.preferences.set_volume("music_room_mixer", 0.0)
         else:
             if self.oldVolume == 0.0:
-                gamePreference.set_volume("music_room_mixer", 0.5)
+                renpy.game.preferences.set_volume("music_room_mixer", 0.5)
             else:
-                gamePreference.set_volume("music_room_mixer", self.oldVolume)
+                renpy.game.preferences.set_volume("music_room_mixer", self.oldVolume)
 
     def check_paused_state(self):
         logging.info(
@@ -423,7 +422,7 @@ class soundtrack:
 
 
 class ExternalOSTMonitor:
-    def __init__(self, channel="music_player"):
+    def __init__(self, channel="music_room"):
         self.channel = channel
         self.lock = threading.RLock()
         self.periodic_condition = threading.Condition()
@@ -463,7 +462,7 @@ class ExternalOSTMonitor:
 
 @renpy.exports.pure
 class AdjustableAudioPositionValue(renpy.ui.BarValue):
-    def __init__(self, channel="music_player", update_interval=0.0):
+    def __init__(self, channel="music_room", update_interval=0.0):
         self.channel = channel
         self.update_interval = update_interval
         self.adjustment = None
@@ -535,6 +534,7 @@ class OSTPlayerSongAssign:
         soundtracks = sorted(soundtracks, key=lambda soundtracks: soundtracks.name)
 
     def get_info(self, path, tags):
+        cover_formats = None
         sec = tags.duration
         try:
             image_data = tags.get_image()
@@ -542,25 +542,16 @@ class OSTPlayerSongAssign:
             with renpy.exports.file("python-packages/binaries.txt") as a:
                 lines = a.readlines()
 
-            jpgbytes = bytes("\\xff\\xd8\\xff")
-            pngbytes = bytes("\\x89PNG")
-            utfbytes = bytes("o\\x00v\\x00e\\x00r\\x00\\x00\\x00\\x89PNG\\r\\n")
+            for line in image_data.splitlines():
+                if "PNG" in line:
+                    cover_formats = ".png"
+                    line.replace(line, lines[2])
+                elif "JFIF" in line:
+                    cover_formats = ".jpg"
+                    line.replace(line, lines[1])
+                break
 
-            jpgmatch = re.search(jpgbytes, image_data)
-            pngmatch = re.search(pngbytes, image_data)
-            utfmatch = re.search(utfbytes, image_data)
-
-            if jpgmatch:
-                cover_formats = ".jpg"
-            elif pngmatch:
-                cover_formats = ".png"
-            else:
-                raise TypeError
-
-            if utfmatch:  # addresses itunes cover descriptor fixes
-                logging.warning("Improper PNG data was found. Repairing cover art.")
-                image_data = re.sub(utfbytes, lines[2], image_data)
-            else:
+            if cover_formats is None:
                 raise TypeError
 
             coverAlbum = re.sub(
@@ -574,16 +565,18 @@ class OSTPlayerSongAssign:
                     os.path.join(gamedir, "track/covers", coverAlbum + cover_formats),
                     "wb",
                 ) as f:
-                    f.write(image_data)
+                    f.write(bytes(image_data))
 
-                art = "track/covers/" + coverAlbum + cover_formats
-                logging.info("Obtained album cover for " + path + ".")
-                return art
+            art = "track/covers/" + coverAlbum + cover_formats
+            logging.info("Obtained album cover for " + path + ".")
+            return art
         except TypeError:
             logging.warning(
                 'Cover art could not be obtained/written to the "covers" directory.'
             )
             return None
+        except:
+            raise
 
     def scan_song(self):
         logging.info("Scanning music directories.")
@@ -782,7 +775,7 @@ class OSTPlayerMain:
 
 
 ost_main = OSTPlayerMain()
-gamePreference.set_mute("music", False)
+renpy.game.preferences.set_mute("music", False)
 ost_monitor = ExternalOSTMonitor()
 
 # Backwards Compatability
