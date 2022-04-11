@@ -1,309 +1,640 @@
 
-## Music Room ########################################################
-##
-## This controls the music room player positions, sizes and more.
-######################################################################
-
-## The positions and sizes of the music viewport list
-define gui.music_room_viewport_xsize = int(250 * ost.scale)
-define gui.music_room_viewport_pos = int(20 * ost.scale)
-define gui.music_room_spacing = int(20 * ost.scale)
-define gui.music_room_viewport_ysize = 0.93
-
-## The positions and sizes of the music information text
-define gui.music_room_information_xpos = int(700 * ost.scale)
-define gui.music_room_information_ypos = int(208 * ost.scale)
-define gui.music_room_information_xsize = int(570 * ost.scale)
-
-## The positions and sizes of the music controls
-define gui.music_room_options_xpos = int(715 * ost.scale)
-define gui.music_room_options_ypos = int(410 * ost.scale)
-define gui.music_room_options_spacing = int(20 * ost.scale)
-define gui.music_room_options_button_size = int(36 * ost.scale)
-
-## The positions of the music settings controls
-define gui.music_room_settings_ypos = int(450 * ost.scale)
-
-## The positions and sizes of the music progress bar
-define gui.music_room_progress_xsize = int(710 * ost.scale)
-define gui.music_room_progress_xpos = int(330 * ost.scale)
-define gui.music_room_progress_ypos = int(520 * ost.scale)
-
-## The positions and sizes of the music volume bar
-define gui.music_room_volume_xsize = int(120 * ost.scale)
-define gui.music_room_volume_xpos = int(1130 * ost.scale)
-define gui.music_room_volume_options_xpos = int(1090 * ost.scale)
-define gui.music_room_volume_options_ypos = int(509 * ost.scale)
-
-## The positions for the music progress/duration time text
-define gui.music_room_progress_text_xpos = int(330 * ost.scale)
-define gui.music_room_text_size = gui.interface_text_size
-define gui.music_room_progress_text_xalign = 0.28 * ost.scale
-define gui.music_room_progress_text_yalign = 0.79 * ost.scale
-
-## The positions for the cover art and it's transform properties
-define gui.music_room_cover_art_xpos = int(500 * ost.scale)
-define gui.music_room_cover_art_ypos = int(300 * ost.scale)
-define gui.music_room_cover_art_size = int(350 * ost.scale)
-
-init python:
-
-    if renpy.variant('small'):
-        gui.music_room_text_size = int(24 * ost.scale)
-        gui.music_room_progress_text_yalign = 0.81 * ost.scale
-        gui.music_room_volume_options_xpos = int(1080 * ost.scale)
-        gui.music_room_volume_options_ypos = int(514 * ost.scale)
-        gui.music_room_options_button_size = int(40 * ost.scale)
-
-image readablePos = DynamicDisplayable(renpy.curry(ost.music_pos)(
+image readablePos = DynamicDisplayable(renpy.curry(ost.ost_info.music_pos)(
                     "music_room_progress_text"))
-image readableDur = DynamicDisplayable(renpy.curry(ost.music_dur)(
+image readableDur = DynamicDisplayable(renpy.curry(ost.ost_info.music_dur)(
                     "music_room_duration_text")) 
-image titleName = DynamicDisplayable(renpy.curry(ost.dynamic_title_text)(
+image titleName = DynamicDisplayable(renpy.curry(ost.ost_info.dynamic_title_text)(
                     "music_room_information_text")) 
-image authorName = DynamicDisplayable(renpy.curry(ost.dynamic_author_text)(
+image authorName = DynamicDisplayable(renpy.curry(ost.ost_info.dynamic_author_text)(
                     "music_room_information_text")) 
-image coverArt = DynamicDisplayable(ost.refresh_cover_data) 
-image songDescription = DynamicDisplayable(renpy.curry(ost.dynamic_description_text)(
+image albumName = DynamicDisplayable(renpy.curry(ost.ost_info.dynamic_album_text)(
                     "music_room_information_text")) 
-image rpa_map_warning = DynamicDisplayable(renpy.curry(ost.rpa_mapping_detection)(
-                    "music_room_information_text"))
-image playPauseButton = DynamicDisplayable(ost.auto_play_pause_button)
+image coverArt = DynamicDisplayable(ost.ost_info.refresh_cover_data) 
+image playPauseButton = DynamicDisplayable(ost.ost_controls.auto_play_pause_button)
 
+default persistent.listui = False
+    
 screen music_room():
-
     tag menu
 
     default bar_val = ost.AdjustableAudioPositionValue()
 
-    style_prefix "music_room"
-
-    add gui.main_menu_background
-
-    frame:
-        style "music_room_frame"
-
-    side "c l":
+    use game_menu(_("OST Player")):
         
-        viewport id "vpo":
+        hbox at music_room_transition:
+            style "music_room_hbox"
+            
+            if not ost.ost_info.get_current_soundtrack():
+                if persistent.listui:
+                    xpos 0.35
+                else:
+                    xpos 0.3
+                    ypos 0.4
+                    spacing 10
 
-            style "music_room_viewport"
+                vbox:
+                    text "No music is currently playing.":
+                        color "#000"
+                        outlines[]
+                        size 24
 
-            mousewheel True
-            has vbox
+                    if not persistent.listui:
+                        textbutton "Music List":
+                            text_style "navigation_button_text"
+                            action [ShowMenu("music_list_type"), With(Dissolve(0.25))]
+                            xalign 0.5
+            else:
+                if persistent.listui:
+                    xpos 0.08
+                    yalign -0.25
 
-            spacing gui.navigation_spacing
+                    add "coverArt" at cover_art_resize(200)
+                else:
+                    xpos 0.06
+                    yalign 0.25
+                
+                    add "coverArt" at cover_art_resize(350)
 
-            for st in ost.soundtracks:
-                textbutton "[st.name]":
-                    text_style "music_room_list_button"
-                    if ost.game_soundtrack:
-                        action [SensitiveIf(ost.game_soundtrack.name != st.name
-                                or ost.game_soundtrack.author != st.author 
-                                or ost.game_soundtrack.description != st.description), 
-                                SetVariable("ost.game_soundtrack", st), 
-                                SetVariable("ost.pausedstate", False), 
-                                Play("music_room", st.path, loop=ost.loopSong,
-                                fadein=2.0)]
-                    else:
-                        action [SetVariable("ost.game_soundtrack", st), 
-                        SetVariable("ost.pausedstate", False), 
-                        Play("music_room", st.path, loop=ost.loopSong, fadein=2.0)]
-
-        vbar value YScrollValue("vpo") xpos 1.0 ypos 20
-
-    if ost.game_soundtrack:
-
-        if ost.game_soundtrack.cover_art:
-
-            add "coverArt" at cover_art_fade
-
-        if ost.game_soundtrack.author:
-            vbox:
-                hbox: 
-                    vbox:
-                        style_prefix "music_room_information"
-                        add "titleName"
-                hbox:
-                    vbox:
-                        style_prefix "music_room_information"
-                        add "authorName"
-
-                if ost.game_soundtrack.description:
+                vbox:
                     hbox:
+                        if not persistent.listui:
+                            yoffset 80
+                        else:
+                            yoffset -2
+
                         vbox:
-                            style_prefix "music_room_information"
-                            add "songDescription"
+                            if not persistent.listui:
+                                xsize 520
+                            else:
+                                xsize 640
 
-        hbox:
-            style "music_room_control_options"
+                            add "titleName"
 
-            imagebutton:
-                idle At("images/music_room/backward.png", imagebutton_scale)
-                hover At("images/music_room/backwardHover.png", imagebutton_scale)
-                action [SensitiveIf(renpy.music.is_playing(channel='music_room')), 
-                        Function(ost.current_music_backward)]
+                            add "authorName"
+
+                            add "albumName"
+
+                            hbox:
+                                if not persistent.listui:
+                                    yoffset 20
+                                else:
+                                    yoffset 10
+                                spacing 15
+
+                                imagebutton:
+                                    idle "images/music_room/backward.png"
+                                    hover "images/music_room/backwardHover.png"
+                                    action [SensitiveIf(renpy.music.is_playing(channel='music_room')), Function(ost.ost_controls.rewind_music)]
+
+                                add "playPauseButton"
+
+                                imagebutton:
+                                    idle "images/music_room/forward.png"
+                                    hover "images/music_room/forwardHover.png"
+                                    action [SensitiveIf(renpy.music.is_playing(channel='music_room')), Function(ost.ost_controls.forward_music)]
+
+                                if persistent.listui:
+
+                                    null width 15
+
+                                    imagebutton:
+                                        idle ConditionSwitch("ost.ost_controls.loopSong", "images/music_room/replayOn.png", 
+                                                            "True", "images/music_room/replay.png")
+                                        hover "images/music_room/replayHover.png"
+                                        action [ToggleVariable("ost.ost_controls.loopSong", False, True)]
+                                    imagebutton:
+                                        idle ConditionSwitch("ost.ost_controls.randomSong", "images/music_room/shuffleOn.png", 
+                                                            "True", "images/music_room/shuffle.png")
+                                        hover "images/music_room/shuffleHover.png"
+                                        action [ToggleVariable("ost.ost_controls.randomSong", False, True)]
+                                    imagebutton:
+                                        idle "images/music_room/info.png"
+                                        hover "images/music_room/infoHover.png"
+                                        action [ShowMenu("music_info"), With(Dissolve(0.25))]
+                                    imagebutton:
+                                        idle "images/music_room/settings.png"
+                                        hover "images/music_room/settingsHover.png"
+                                        action [ShowMenu("music_settings"), With(Dissolve(0.25))]
+                                    imagebutton:
+                                        idle "images/music_room/refreshList.png"
+                                        hover "images/music_room/refreshHover.png"
+                                        action [Function(ost.ost_song_assign.refresh_list)]
+
+                                    null width 15
+                                    
+                                    imagebutton:
+                                        idle ConditionSwitch("preferences.get_volume(\"music_room_mixer\") == 0.0", 
+                                            "images/music_room/volume.png", "True", 
+                                            "images/music_room/volumeOn.png")
+                                        hover ConditionSwitch("preferences.get_volume(\"music_room_mixer\") == 0.0", 
+                                            "images/music_room/volumeHover.png", "True", 
+                                            "images/music_room/volumeOnHover.png")
+                                        action [Function(ost.ost_controls.mute_player)]
+                                        yoffset -8
+                                    bar value Preference ("music_room_mixer volume") xsize 100 yoffset 8 xoffset -15
+                                
+                            if persistent.listui:
+                                yoffset 20
+                                vbox:
+                                    hbox:
+                                        bar:
+                                            style "music_room_list_bar"
+
+                                            value bar_val
+                                            hovered bar_val.hovered
+                                            unhovered bar_val.unhovered
+
+                                    hbox:
+                                        add "readablePos" 
+                                        add "readableDur" xpos 550
+
+                            if not persistent.listui:
+
+                                hbox:
+                                    yoffset 30
+                                    spacing 15
+
+                                    imagebutton:
+                                        idle ConditionSwitch("ost.ost_controls.loopSong", "images/music_room/replayOn.png", 
+                                                            "True", "images/music_room/replay.png")
+                                        hover "images/music_room/replayHover.png"
+                                        action [ToggleVariable("ost.ost_controls.loopSong", False, True)]
+                                    imagebutton:
+                                        idle ConditionSwitch("ost.ost_controls.randomSong", "images/music_room/shuffleOn.png", 
+                                                            "True", "images/music_room/shuffle.png")
+                                        hover "images/music_room/shuffleHover.png"
+                                        action [ToggleVariable("ost.ost_controls.randomSong", False, True)]
+                                    imagebutton:
+                                        idle "images/music_room/info.png"
+                                        hover "images/music_room/infoHover.png"
+                                        action [ShowMenu("music_info"), With(Dissolve(0.25))]
+                                    imagebutton:
+                                        idle "images/music_room/musicwindow.png"
+                                        hover "images/music_room/musicwindowHover.png"
+                                        action [ShowMenu("music_list_type"), With(Dissolve(0.25))]
+                                    imagebutton:
+                                        idle "images/music_room/settings.png"
+                                        hover "images/music_room/settingsHover.png"
+                                        action [ShowMenu("music_settings"), With(Dissolve(0.25))]
+                                    imagebutton:
+                                        idle "images/music_room/refreshList.png"
+                                        hover "images/music_room/refreshHover.png"
+                                        action [Function(ost.ost_song_assign.refresh_list)]
+        
+        if persistent.listui:   
+            vpgrid id "mpl" at music_room_transition:
+                rows len(ost.soundtracks)
+                cols 1
+                mousewheel True
+                draggable True
+
+                xpos 0.03
+                ypos 0.25
+                xsize 950
+                ysize 380
+                spacing 5
+
+                for st in ost.soundtracks:
+                    frame:
+                        xsize 900
+                        hbox:
+                            imagebutton:
+                                xsize 66 ysize 66
+                                idle Transform(ConditionSwitch(ost.ost_info.get_current_soundtrack() == st, If(ost.ost_controls.pausedState, "images/music_room/music_list_pause.png", 
+                                    "images/music_room/music_list_play.png"), "True", st.cover_art), size=(64, 64))
+                                hover Transform(ConditionSwitch(ost.ost_info.get_current_soundtrack() == st, If(ost.ost_controls.pausedState, "images/music_room/music_list_play.png", 
+                                    "images/music_room/music_list_pause.png"), "True", "images/music_room/music_list_play.png"), size=(64, 64))
+                                action If(ost.ost_info.get_current_soundtrack() == st, If(ost.ost_controls.pausedState, Function(ost.ost_controls.play_music), Function(ost.ost_controls.pause_music)), 
+                                    [SetVariable("ost.ost_controls.pausedState", False), Function(ost.ost_info.set_current_soundtrack, st), Play("music_room", st.path, loop=ost.ost_controls.loopSong, 
+                                    fadein=2.0)])
+
+                            null width 15
+
+                            vbox:
+                                xsize 770
+                                text "{b}[st.name]{/b}" style "music_room_alt_list_title_text"
+                                text "[st.author]" style "music_room_alt_list_author_text"
+                                text "[st.album]"  style "music_room_alt_list_author_text"
+                            if st.byteTime:
+                                vbox:
+                                    yalign 0.5
+                                    xpos -20
+                                    text ost.ost_info.convert_time(st.byteTime) style "music_room_alt_list_author_text"
+
+        if not persistent.listui:
+            hbox at music_room_transition:
+                xalign 0.4
+                yalign 0.85
             
-            add "playPauseButton" at imagebutton_scale
-            
-            imagebutton:
-                idle At("images/music_room/forward.png", imagebutton_scale)
-                hover At("images/music_room/forwardHover.png", imagebutton_scale)
-                action [SensitiveIf(renpy.music.is_playing(channel='music_room')), 
-                        Function(ost.current_music_forward)]
+                if ost.ost_info.get_current_soundtrack():
+                    vbox:
+                        hbox:
+                            bar:
+                                style "music_room_bar"
 
-        hbox:
+                                value bar_val
+                                hovered bar_val.hovered
+                                unhovered bar_val.unhovered
 
-            style "music_room_setting_options"
-
-            imagebutton:
-                idle At(ConditionSwitch("ost.organizeAZ", "images/music_room/A-ZOn.png", 
-                        "True", "images/music_room/A-Z.png"), imagebutton_scale)
-                hover At("images/music_room/A-ZHover.png", imagebutton_scale)
-                action [ToggleVariable("ost.organizeAZ", False, True), 
-                        Function(ost.resort)]
-            
-            imagebutton:
-                idle At(ConditionSwitch("ost.organizePriority", 
-                "images/music_room/priorityOn.png", "True", 
-                "images/music_room/priority.png"), imagebutton_scale)
-                hover At("images/music_room/priorityHover.png", imagebutton_scale)
-                action [ToggleVariable("ost.organizePriority", False, True), 
-                        Function(ost.resort)]
-            
-            imagebutton:
-                idle At(ConditionSwitch("ost.loopSong", 
-                "images/music_room/replayOn.png", "True", 
-                "images/music_room/replay.png"), imagebutton_scale)
-                hover At("images/music_room/replayHover.png", imagebutton_scale)
-                action [ToggleVariable("ost.loopSong", False, True)]
-            
-            imagebutton:
-                idle At(ConditionSwitch("ost.randomSong", 
-                        "images/music_room/shuffleOn.png", "True", 
-                        "images/music_room/shuffle.png"), imagebutton_scale)
-                hover At("images/music_room/shuffleHover.png", imagebutton_scale)
-                action [ToggleVariable("ost.randomSong", False, True)]
-            
-            imagebutton:
-                idle At("images/music_room/refreshList.png", imagebutton_scale)
-                hover At("images/music_room/refreshHover.png", imagebutton_scale)
-                action [Function(ost.refresh_list)]
-
-        bar:
-            style "music_room_progress_bar"
-            value bar_val
-            hovered bar_val.hovered
-            unhovered bar_val.unhovered
-
-        bar value Preference ("music_room_mixer volume") style "music_room_volume_bar"
-
-        imagebutton:
-            style "music_room_volume_options"
-            idle At(ConditionSwitch("preferences.get_volume(\"music_room_mixer\") == 0.0", 
-                    "images/music_room/volume.png", "True", 
-                    "images/music_room/volumeOn.png"), imagebutton_scale)
-            hover At(ConditionSwitch("preferences.get_volume(\"music_room_mixer\") == 0.0", 
-                    "images/music_room/volumeHover.png", "True", 
-                    "images/music_room/volumeOnHover.png"), imagebutton_scale)
-            action [Function(ost.mute_player)]
-            
-        add "readablePos" 
-        add "readableDur"
+                        hbox:
+                            add "readablePos" 
+                            add "readableDur" xpos 630
+                          
+                    imagebutton:
+                        idle ConditionSwitch("preferences.get_volume(\"music_room_mixer\") == 0.0", 
+                            "images/music_room/volume.png", "True", 
+                            "images/music_room/volumeOn.png")
+                        hover ConditionSwitch("preferences.get_volume(\"music_room_mixer\") == 0.0", 
+                            "images/music_room/volumeHover.png", "True", 
+                            "images/music_room/volumeOnHover.png")
+                        action [Function(ost.ost_controls.mute_player)]
+                        yoffset -16 xoffset 10
+                    bar value Preference ("music_room_mixer volume") xsize 100 xoffset 10
 
     text "Ren'Py Universal Player v[ost.version]":
         xalign 1.0 yalign 1.0
         xoffset -10 yoffset -10
-        size gui.notify_text_size
-    
+        style "main_menu_version"
+
     if not config.developer:
-        add "rpa_map_warning" xpos 0.23 ypos 0.85 xsize 950
+        hbox:
+            xalign 0.5 yalign 0.98
 
-    textbutton _("Return"):
-        style "return_button"
-        action [Return(), Function(ost.check_paused_state), 
-                If(not ost.prevTrack, None, 
-                false=Play('music', ost.prevTrack, fadein=2.0))]
+            python:
+                try:
+                    renpy.file("RPASongMetadata.json")
+                    file_found = True
+                except: file_found = False
+            
+            if not file_found:
+                imagebutton:
+                    idle "images/music_room/osterror.png"
+                    action Show("dialog", message="{b}Warning{/b}\nThe RPA metadata file hasn't been generated.\nSongs in the {i}track{/i} folder won't be listed if you build your mod without it.\n Set {i}config.developer{/i} to {u}True{/u} in order to generate this file.",
+                        ok_action=Hide("dialog"))
 
-style music_room_frame is empty
-style music_room_viewport is gui_viewport
-style music_room_progress_bar is gui_slider
-style music_room_volume_bar is gui_slider
-style music_room_volume_options is gui_button
-style music_room_list_button is gui_button
-style music_room_control_options is gui_button
-style music_room_setting_options is gui_button
-style music_room_information_text is gui_text
-style music_room_progress_text is gui_text
-style music_room_duration_text is gui_text
+    # Start the music playing on entry to the music room.
+    on "replace" action [Function(ost.ost_main.ost_start), Stop("music", fadeout=1.0)]
+    on "show" action [Function(ost.ost_main.ost_start), Stop("music", fadeout=1.0)]
 
-style music_room_frame:
-    yfill True
+    # Restore the main menu music upon leaving.
+    on "hide" action [If(persistent.auto_restore_music,
+        [Stop("music_room", fadeout=1.0), SetMute("music", False), Play("music", ost.ost_main.prevTrack, fadein=1.0)],
+        SetMute("music", True))]
+    on "replaced" action [Hide("music_settings"), Hide("music_list"), Hide("music_list_type"), 
+        Hide("music_info"), Function(ost.ost_main.ost_log_stop), If(persistent.auto_restore_music,
+        [Stop("music_room", fadeout=1.0), SetMute("music", False), Play("music", ost.ost_main.prevTrack, fadein=1.0)],
+        SetMute("music", True))]
 
-    background "gui/overlay/main_menu.png"
+screen music_list_type(type=None):
 
-style music_room_list_button is default:
-    size gui.interface_text_size
-    hover_color gui.hover_color
-    selected_color gui.selected_color
-    insensitive_color gui.insensitive_color
-    #hover_sound gui.hover_sound
-    #activate_sound gui.activate_sound
-    line_spacing 5
+    drag:
+        drag_name "mlisttype"
+        drag_handle (0, 0, 1.0, 40)
+        xsize 470
+        ysize 260
+        xpos 0.3
+        ypos 0.2
 
-style music_room_viewport:
-    xpos gui.music_room_viewport_pos
-    ypos gui.music_room_viewport_pos
-    xsize gui.music_room_viewport_xsize
-    ysize gui.music_room_viewport_ysize
+        frame:
 
-style music_room_information_text:
-    font gui.interface_text_font
-    xpos gui.music_room_information_xpos
-    ypos gui.music_room_information_ypos
+            if type is not None:
+                hbox:
+                    xalign 0.05 ypos 0.005
+                    textbutton "<-":
+                        text_style "navigation_button_text"
+                        action [Hide("music_list"), ShowMenu("music_list_type")]
 
-style music_room_control_options:
-    xpos gui.music_room_options_xpos
-    ypos gui.music_room_options_ypos
-    spacing gui.music_room_spacing
+            hbox:
+                ypos 0.005
+                xalign 0.52 
+                text "Music List":
+                    style "music_room_generic_text"
 
-style music_room_setting_options is music_room_control_options:
-    ypos gui.music_room_settings_ypos
+            hbox:
+                ypos 0.005
+                xalign 0.98
+                textbutton "X":
+                    text_style "navigation_button_text"
+                    action Hide("music_list_type")
 
-style music_room_progress_bar:
-    xsize gui.music_room_progress_xsize
-    xpos gui.music_room_progress_xpos
-    ypos gui.music_room_progress_ypos
+            side "c":
+                xpos 0.05
+                ypos 0.2
+                xsize 430
+                ysize 200
 
-style music_room_volume_bar:
-    xsize gui.music_room_volume_xsize
-    xpos gui.music_room_volume_xpos
-    ypos gui.music_room_progress_ypos
+                viewport id "mlt":
+                    mousewheel True
+                    draggable True
+                    has vbox
 
-style music_room_volume_options:
-    xpos gui.music_room_volume_options_xpos
-    ypos gui.music_room_volume_options_ypos
+                    if type is None:
+                        textbutton "All Songs":
+                            text_style "music_list_button_text"
+                            action [Hide("music_list_type"), ShowMenu("music_list")]
 
-style music_room_progress_text:
-    font gui.interface_text_font
-    xalign gui.music_room_progress_text_xalign
-    yalign gui.music_room_progress_text_yalign
-    size gui.music_room_text_size
+                        textbutton "Artist":
+                            text_style "music_list_button_text"
+                            action [Hide("music_list_type"), ShowMenu("music_list_type", type="artist")]
 
-style music_room_duration_text is music_room_progress_text:
-    xalign 0.79 * ost.scale
+                        textbutton "Album Artist":
+                            text_style "music_list_button_text"
+                            action [Hide("music_list_type"), ShowMenu("music_list_type", type="albumartist")]
 
-style music_room_information_vbox:
-    xsize gui.music_room_information_xsize
-    xfill True
+                        textbutton "Composer":
+                            text_style "music_list_button_text"
+                            action [Hide("music_list_type"), ShowMenu("music_list_type", type="composer")]
 
-transform cover_art_fade:
-    anchor (0.5, 0.5)
-    xpos gui.music_room_cover_art_xpos
-    ypos gui.music_room_cover_art_ypos
-    size (gui.music_room_cover_art_size, gui.music_room_cover_art_size)
-    alpha 0
-    linear 0.2 alpha 1
+                        textbutton "Genre":
+                            text_style "music_list_button_text"
+                            action [Hide("music_list_type"), ShowMenu("music_list_type", type="genre")]
 
-transform imagebutton_scale:
-    size(gui.music_room_options_button_size, gui.music_room_options_button_size)
+                    else:
+                        python:
+                            temp_list = []
+                            for st in ost.soundtracks:
+                                if type == "artist":
+                                    if st.author not in temp_list:
+                                        temp_list.append(st.author)
+                                elif type == "albumartist":
+                                    if st.albumartist not in temp_list:
+                                        temp_list.append(st.albumartist)
+                                elif type == "composer":
+                                    if st.composer not in temp_list:
+                                        temp_list.append(st.composer)
+                                elif type == "genre":
+                                    if st.genre not in temp_list:
+                                        temp_list.append(st.genre)
+                            
+                            temp_list = sorted(temp_list)
+
+                        for st in temp_list:
+                            textbutton "[st]":
+                                style "l_list"
+                                text_style "music_list_button_text"
+                                action [Hide("music_list_type"), ShowMenu("music_list", type=type, arg=st)]
+                        
+    on "hide" action With(Dissolve(0.25))
+            
+screen music_list(type=None, arg=None):
+
+    drag:
+        drag_name "mlist"
+        drag_handle (0, 0, 1.0, 40)
+        xsize 470
+        ysize 260
+        xpos 0.3
+        ypos 0.2
+
+        python:
+            new_soundtrack_list = []
+            for st in ost.soundtracks:
+                if type == "artist":
+                    if arg == st.author:
+                        new_soundtrack_list.append(st)
+                elif type == "albumartist":
+                    if arg == st.albumartist:
+                        new_soundtrack_list.append(st)
+                elif type == "composer":
+                    if arg == st.composer:
+                        new_soundtrack_list.append(st)
+                elif type == "genre":
+                    if arg == st.genre:
+                        new_soundtrack_list.append(st)
+                else:
+                    new_soundtrack_list.append(st)
+                    
+            new_soundtrack_list = sorted(new_soundtrack_list, key=lambda new_soundtrack_list: new_soundtrack_list.name)
+
+        frame:
+            hbox:
+                xalign 0.05 ypos 0.005
+                textbutton "<-":
+                    text_style "navigation_button_text"
+                    action [Hide("music_list"), ShowMenu("music_list_type", type=type)]
+
+            hbox:
+                ypos 0.005
+                xalign 0.52 
+                text "Music List":
+                    style "music_room_generic_text"
+                    size 24
+
+            hbox:
+                ypos 0.005
+                xalign 0.98
+                textbutton "X":
+                    text_style "navigation_button_text"
+                    action Hide("music_list")
+
+            side "c":
+                xpos 0.05
+                ypos 0.2
+                xsize 430
+                ysize 200
+
+                viewport id "ml":
+                    draggable True
+                    mousewheel True
+                    has vbox
+
+                    for nst in new_soundtrack_list:
+                        textbutton "[nst.name]":
+                            style "l_list"
+                            text_style "music_list_button_text"
+                            action [Hide("music_list"), Function(ost.ost_info.set_current_soundtrack, nst), Play("music_room", nst.path, loop=ost.ost_controls.loopSong, fadein=2.0)]
+
+    on "hide" action With(Dissolve(0.25))
+
+screen music_settings():
+
+    drag:
+        drag_name "msettings"
+        drag_handle (0, 0, 1.0, 40)
+        xsize 470
+        ysize 260
+        xpos 0.5
+        ypos 0.5
+
+        frame:
+            hbox:
+                ypos 0.005
+                xalign 0.52 
+                text "Player Settings":
+                    style "music_room_generic_text"
+
+            hbox:
+                ypos 0.005
+                xalign 0.98
+                textbutton "X":
+                    text_style "navigation_button_text"
+                    action Hide("music_settings")
+
+            side "c":
+                xpos 0.05
+                ypos 0.2
+                xsize 430
+                ysize 200
+
+                viewport id "mlt":
+                    mousewheel True
+                    draggable True
+                    has vbox
+                    
+                    textbutton "Compact Mode":
+                        style "radio_button" 
+                        action [Hide("music_list_type"), Hide("music_list"), Hide("music_info"),
+                            ToggleField(persistent, "listui", False, True)]
+
+                    textbutton "Restore Music Channel Music":
+                        style "radio_button" 
+                        action InvertSelected(ToggleField(persistent, "auto_restore_music", False, True))
+                            
+                    textbutton "About Ren'Py Universal Player":
+                        text_style "navigation_button_text" 
+                        action Show("dialog", message="Ren'Py Universal Player by GanstaKingofSA.\nCopyright © 2021-2022 GanstaKingofSA.", 
+                            ok_action=Hide("dialog"))
+
+    on "hide" action With(Dissolve(0.25))    
+
+screen music_info():
+
+    drag:
+        drag_name "minfo"
+        drag_handle (0, 0, 1.0, 40)
+        xsize 480
+        ysize 260
+        xpos 0.4
+        ypos 0.4
+
+        frame:
+            hbox:
+                ypos 0.005
+                xalign 0.52 
+                text "Music Info" style "music_room_generic_text"
+
+            hbox:
+                ypos 0.005
+                xalign 0.98
+                textbutton "X":
+                    text_style "navigation_button_text"
+                    action Hide("music_info")
+
+            side "c":
+                xpos 0.05
+                ypos 0.2
+                xsize 460
+                ysize 200
+
+                viewport id "mi":
+                    mousewheel True
+                    draggable True
+                    has vbox
+
+                    python:
+                        albumartist = ost.ost_info.get_album_artist()
+                        composer = ost.ost_info.get_composer()
+                        genre = ost.ost_info.get_genre()
+                        sideloaded = ost.ost_info.get_sideload()
+                        comment = ost.ost_info.get_description() or None
+                    
+                    text "{u}Album Artist{/u}: [albumartist]" style "music_room_info_text"
+                    text "{u}Composer{/u}: [composer]" style "music_room_info_text"
+                    text "{u}Genre{/u}: [genre]" style "music_room_info_text"
+                    text "{u}Sideloaded{/u}: [sideloaded]" style "music_room_info_text"
+                    text "{u}Comment{/u}: [comment]" style "music_room_info_text"
+
+    on "hide" action With(Dissolve(0.25))    
+
+style music_room_music_text is navigation_button_text:
+    #font "images/music_room/riffic-bold.ttf"
+    color "#000"
+    outlines [(0, "#000", 0, 0)]
+    hover_outlines []
+    insensitive_outlines []
+    size 36
+
+style music_room_song_author_text:
+    font "images/music_room/NotoSansSC-Light.otf"
+    size 22
+    outlines[]
+    color "#000"
+
+style music_list_button_text is navigation_button_text:
+    size 22
+
+style music_room_hbox:
+    spacing 25
+
+style music_room_bar:
+    xsize 710
+    thumb "gui/slider/horizontal_hover_thumb.png"
+
+style music_room_list_bar is music_room_bar:
+    xsize 600
+
+style music_room_alt_list_title_text:
+    font "images/music_room/NotoSansSC-Light.otf"
+    color "#000"
+    outlines []
+    size 15
+    bold True
+
+style music_room_alt_list_author_text is music_room_alt_list_title_text:
+    size 13
+    bold False
+
+transform music_room_transition:
+    alpha(0.0)
+    linear 0.5 alpha(1.0)
+
+style song_progress_text:
+    font "gui/font/Halogen.ttf"
+    size 25
+    outlines[]
+    color "#000"
+    xalign 0.28 
+    yalign 0.78
+
+style song_duration_text is song_progress_text:
+    xalign 0.79 
+    yalign 0.78
+
+style l_list:
+    left_padding 5
+
+style renpy_generic_text:
+    font "images/music_room/NotoSans-Regular.ttf"
+    color "#000"
+    outlines []
+
+transform cover_art_resize(x):
+    size(x, x)
+
+screen dialog(message, ok_action):
+
+    ## Ensure other screens do not get input while this screen is displayed.
+    modal True
+
+    zorder 200
+
+    style_prefix "confirm"
+
+    add "gui/overlay/confirm.png"
+
+    frame:
+
+        vbox:
+            xalign .5
+            yalign .5
+            spacing 30
+
+            label _(message):
+                style "confirm_prompt"
+                xalign 0.5
+
+            hbox:
+                xalign 0.5
+                spacing 100
+
+                textbutton _("OK") action ok_action
